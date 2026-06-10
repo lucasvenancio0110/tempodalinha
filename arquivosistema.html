@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>EXPERTLINK — Setup Timer</title>
+<link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
+
+<!-- PWA CONFIG -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#7B22A6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EXPERTLINK">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="apple-touch-startup-image" href="/icons/icon-512.png">
+
+<style>
+:root{
+  --bg1:#150A19; --bg2:#24102B;
+  --primary:#7B22A6; --primary2:#A95BD4;
+  --text:#fff; --ink:#1a1023; --muted:#CFC6D9;
+  --card:#ffffff; --line:#EEE7F3;
+  --ok:#10b981; --warn:#f59e0b; --bad:#ef4444;
+  --ok-bg:#e7fcf4; --warn-bg:#fff4e5; --bad-bg:#ffe9ec;
+  --radius:16px; --pad:16px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; color:var(--text);
+  font-family:'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(900px 700px at 85% 90%, rgba(169,91,212,.14), transparent 60%),
+    radial-gradient(800px 600px at 10% 10%, rgba(123,34,166,.10), transparent 55%),
+    linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
+  background-attachment:fixed;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
+}
+/* Header */
+.header{
+  position:sticky; top:0; z-index:60;
+  display:grid; grid-template-columns:56px 1fr 56px; align-items:center;
+  height:64px; padding:0 var(--pad);
+  backdrop-filter:saturate(140%) blur(8px);
+  background:rgba(21,10,25,.85); border-bottom:1px solid rgba(255,255,255,.08);
+}
+.brand{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-weight:800; background:linear-gradient(180deg,var(--primary),var(--primary2)); color:#140a19;}
+.title{font-weight:700;font-size:20px;letter-spacing:-.2px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iconBtn{width:40px;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+/* Actions */
+.actions{
+  position:sticky;top:64px;z-index:50;display:grid;gap:8px;grid-template-columns:1fr 1fr 1fr;padding:8px var(--pad);
+  background:rgba(21,10,25,.85);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:saturate(140%) blur(8px);
+}
+.btn{height:46px;border:none;border-radius:14px;cursor:pointer;font-weight:800}
+.btn.primary{background:linear-gradient(180deg,var(--primary),var(--primary2));color:#140a19}
+.btn.ghost{background:rgba(255,255,255,.10);color:#fff;border:1px solid rgba(255,255,255,.22)}
+/* Botão geral WhatsApp */
+.btn-whatsapp-all {
+  background: #25D366;
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+.btn-whatsapp-all:hover {
+  background: #1EBE5D;
+}
+
+/* Main */
+main{max-width:1080px;margin:0 auto;padding:14px var(--pad) 120px}
+
+/* Base panel */
+.panel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;margin-bottom:12px}
+.baseGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media (max-width:760px){.baseGrid{grid-template-columns:1fr}}
+.stat{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px}
+.stat .lab{font-size:12px;color:#E8E0F2;font-weight:700}
+.stat .val{font-size:18px;font-weight:700}
+
+/* Inputs */
+.label{font-size:12px;color:#CFC6D9;font-weight:700;margin-bottom:6px}
+.input,.inputNum,select,textarea{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:700;color:var(--ink)}
+.input:focus,.inputNum:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 4px rgba(123,34,166,.14);border-color:#E2D3EE}
+
+/* Cards */
+.list{display:flex;flex-direction:column;gap:14px}
+.card{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.cardHead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px}
+.rowTitle{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tag{padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid #e9e3f1;background:#f3f1f8;color:#5e4a73}
+.tag.ok{background:var(--ok-bg);color:#0b6148;border-color:#c9f7e6}
+.tag.warn{background:var(--warn-bg);color:#7a4e00;border-color:#ffe7c6}
+.tag.bad{background:var(--bad-bg);color:#7f1d1d;border-color:#ffd1d9}
+.cardBody{padding:10px 14px 14px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:860px){.row{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:8px}
+@media (max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:linear-gradient(180deg,#FFFFFF,#FAFAFF);border:1px solid #EEE7F3;border-radius:12px;padding:10px}
+.kpi .num{font-weight:600;font-size:18px;color:#22132E}
+.kpi .lab{font-size:12px;color:#8A7F92;font-weight:700}
+
+/* MP block */
+.mp{margin-top:8px;border:1px dashed rgba(123,34,166,.28);border-radius:12px;background:linear-gradient(180deg,#fff,#faf7ff);padding:12px}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:flex;gap:6px;align-items:center;padding:8px 12px;border:1px solid #eae3f2;border-radius:999px;background:#fff;font-weight:700;color:#2b143b}
+.inline{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.preview{margin-top:6px;font-size:13px;color:#5d506d;font-weight:700}
+
+/* Gabaritos */
+.gabs{margin-top:10px;border:1px solid #EEE7F3;border-radius:12px;background:linear-gradient(180deg,#fff,#fcfbff);padding:12px}
+.gabHeader{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.gabList{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.gabRow{display:grid;grid-template-columns:1fr 36px;gap:6px;align-items:center}
+.gabDel{height:36px;border:none;border-radius:10px;background:#fff;border:1px solid #E7DEEF;cursor:pointer}
+.gabFooter{display:flex;gap:8px;align-items:center;justify-content:flex-start;flex-wrap:wrap}
+.gabTotal{font-size:12px;font-weight:800;color:#5d506d;margin-left:auto}
+
+/* Messages */
+.notice{margin-top:10px;border-left:6px solid transparent;border-radius:12px;padding:12px;font-weight:800}
+.notice.ok{background:linear-gradient(180deg,#ECFDF5,#D1FAE5);border-left-color:var(--ok);color:#065F46}
+.notice.warn{background:linear-gradient(180deg,#FFF7ED,#FFEED4);border-left-color:var(--warn);color:#7C4A00}
+.notice.bad{background:linear-gradient(180deg,#FEF2F2,#FFE6E8);border-left-color:var(--bad);color:#7F1D1D}
+
+/* Req OP */
+.reqWrap{display:none;margin-top:10px;border:1px solid #EEE7F3;border-radius:12px;background:#fff;padding:10px}
+.reqWrap h4{margin:0 0 6px 0;font-size:14px;color:#2b143b}
+.reqGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:640px){.reqGrid{grid-template-columns:1fr}}
+.smallBtn{height:36px;padding:0 12px;border:none;border-radius:10px;font-weight:800;cursor:pointer}
+.smallBtn.primary{background:linear-gradient(180deg,var(--primary),var(--primary2));color:#160a1b}
+.smallBtn.ghost{background:#fff;border:1px solid #E7DEEF;color:#2B1440}
+
+/* Collapse behavior */
+.card.collapsed .cardBody > *:not(.notice){display:none}
+.card.collapsed .notice{display:block !important}
+.card.collapsed .mini {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  flex-wrap: nowrap;
+}
+
+
+.mini {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+
+.t-miniExtra {
+  font-size: 13px;
+  font-weight: 700;
+  color: #301a3d;
+  opacity: 0.9;
+  white-space: nowrap;
+  display: inline-block !important;
+  margin-left: 4px;
+}
+
+
+.mini .chip {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #e9e3f1;
+  background: #f6f3fb;
+  color: #5e4a73;
+  white-space: nowrap;
+}
+
+.mini .chip.ok {
+  background: var(--ok-bg);
+  color: #0b6148;
+  border-color: #c9f7e6;
+}
+
+.mini .chip.warn {
+  background: var(--warn-bg);
+  color: #7a4e00;
+  border-color: #ffe7c6;
+}
+
+.mini .chip.bad {
+  background: var(--bad-bg);
+  color: #7f1d1d;
+  border-color: #ffd1d9;
+}
+
+.mini .t-miniExtra {
+  font-size: 12px;
+  font-weight: 700;
+  color: #49305e;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+/* UPDATE 2025-10-20 — Corrige zoom no iPhone */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="brand">🕰️</div>
+  <div class="title">EXPERTCNC 2.0 — Setup/Produção</div>
+  <button id="btnSettings" class="iconBtn" title="Ajustes" aria-label="Ajustes">⚙️</button>
+</header>
+
+<nav class="actions" aria-label="Ações">
+  <button id="addCardTop" class="btn primary">➕ Adicionar</button>
+  <button id="calcAll" class="btn ghost">🧮 Calcular todas</button>
+  <button id="openSettings" class="btn ghost">⚙️ Ajustes</button>
+</nav>
+
+<main>
+  <section class="panel" id="basePanel">
+    <div class="baseGrid">
+      <div>
+        <div class="label">Data base</div>
+        <input id="baseDate" class="input" type="date">
+      </div>
+      <div>
+        <div class="label">Hora base</div>
+        <input id="baseTime" class="input" type="time" step="60">
+      </div>
+      <div class="stat">
+        <div class="lab">Turno na base</div>
+        <div id="baseShift" class="val">—</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="list" class="list"></section>
+
+  <div style="display:flex;justify-content:center;margin:14px 0 120px">
+    <button id="addCardBottom" class="btn primary">➕ Adicionar Máquina</button>
+  </div>
+  <!-- UPDATE 2025-10-20 — Botão geral WhatsApp -->
+<div style="display:flex;justify-content:center;margin-top:-80px;margin-bottom:40px">
+  <button class="btn-whatsapp-all" onclick="enviarResumoWhatsApp()">📤 Enviar resumo geral via WhatsApp</button>
+</div>
+
+</main>
+
+<script>
+/* ========= Helpers ========= */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const pad2 = n => String(n).padStart(2,'0');
+const fmtDate = d => `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`;
+const fmtTime = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+/* Tempo: "2,35" → 2m35s → 2.58 min; "1,30" → 1m30s → 1.5 min */
+function parseTempoToMinutes(input){
+  if (input == null) return NaN;
+  let s = String(input).trim().toLowerCase();
+  if (!s) return NaN;
+  s = s.replace(/\s+/g, '');
+
+  // 1) vírgula usada como separador de segundos (ex: "2,35" → 2m35s)
+  if (s.includes(',')) {
+    const [minStr, secStr] = s.split(',');
+    const m = parseInt(minStr, 10) || 0;
+    const sec = parseInt(secStr.padEnd(2, '0').slice(0, 2), 10) || 0;
+    return m + sec / 60;
+  }
+
+  // 2) formato com dois-pontos "2:35" → 2m35s
+  if (s.includes(':')) {
+    const [m, sec] = s.split(':').map(Number);
+    return (m || 0) + (sec || 0) / 60;
+  }
+
+  // 3) formato com segundos puros "90s"
+  if (/^\d+(\.\d+)?s$/.test(s)) {
+    const sec = parseFloat(s.replace('s', ''));
+    return sec / 60;
+  }
+
+  // 4) formato "1m30s"
+  const mMatch = s.match(/(\d+)(?=m)/i), sMatch = s.match(/(\d+)(?=s)/i);
+  if (mMatch) {
+    const mm = parseInt(mMatch[1], 10), ss = sMatch ? parseInt(sMatch[1], 10) : 0;
+    return mm + ss / 60;
+  }
+
+  // 5) se for só número simples, assume já estar em minutos
+  const n = parseFloat(s.replace(',', '.'));
+  return isNaN(n) ? NaN : n;
+}
+/* ========= Turnos ========= */
+function getShiftWindowFor(date){
+  const base=new Date(date.getFullYear(),date.getMonth(),date.getDate(),0,0,0,0);
+  const mk=(h,m,plus=0)=>{const d=new Date(base); d.setDate(d.getDate()+plus); d.setHours(h,m,0,0); return d;};
+  const minutes=date.getHours()*60+date.getMinutes();
+  const M0630=6*60+30, M1440=14*60+40, M2240=22*60+40;
+  if (minutes < M0630)      return { id:3, startDT: mk(22,40,-1), endDT: mk(6,30,0) };
+  else if (minutes < M1440) return { id:1, startDT: mk(6,30,0),  endDT: mk(14,40,0) };
+  else if (minutes < M2240) return { id:2, startDT: mk(14,40,0), endDT: mk(22,40,0) };
+  else                      return { id:3, startDT: mk(22,40,0), endDT: mk(6,30,1) };
+}
+function nextShiftWindow(prevEnd, prevId){
+  const nextId=prevId===3?1:prevId+1;
+  const map={1:[6,30,14,40],2:[14,40,22,40],3:[22,40,6,30]};
+  const base=new Date(prevEnd.getFullYear(),prevEnd.getMonth(),prevEnd.getDate(),0,0,0,0);
+  const s=new Date(base); s.setHours(map[nextId][0],map[nextId][1],0,0);
+  let e=new Date(base);
+  if(nextId!==3){ e.setHours(map[nextId][2],map[nextId][3],0,0); if(e<=s) e.setDate(e.getDate()+1); }
+  else { e.setDate(e.getDate()+1); e.setHours(map[nextId][2],map[nextId][3],0,0); }
+  if(s<prevEnd) s.setTime(prevEnd.getTime());
+  return {id:nextId,startDT:s,endDT:e};
+}
+const shiftName = id => `${id}º turno`;
+
+/* ========= Base de cálculo ========= */
+function setBaseToNow(){
+  const now=new Date();
+  $('#baseDate').value = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+  $('#baseTime').value = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+}
+function getBaseDT(){
+  const d=$('#baseDate').value, t=$('#baseTime').value;
+  if(!d||!t) return new Date();
+  const [Y,M,D]=d.split('-').map(Number);
+  const [h,m]=t.split(':').map(Number);
+  return new Date(Y,M-1,D,h,m,0,0);
+}
+function updateBaseShift(){ $('#baseShift').textContent = shiftName(getShiftWindowFor(getBaseDT()).id); }
+
+/* ========= UI global ========= */
+const list = $('#list');
+let machineSeq=1;
+
+$('#addCardTop').addEventListener('click',()=>addCard(true));
+$('#addCardBottom').addEventListener('click',()=>addCard(true));
+$('#calcAll').addEventListener('click',()=> $$('#list .card').forEach(c=>compute(c)));
+$('#openSettings').addEventListener('click',()=>alert('Ajustes gerais: nesta versão de exemplo use as variáveis fixas de MP/bedame no código.'));
+
+/* ========= ADD CARD ========= */
+function addCard(scroll=false){
+  const radioName = `barState-${Date.now()}-${Math.floor(Math.random()*1e6)}`;
+  const id = machineSeq++;
+  const card = document.createElement('div');
+  card.className='card';
+  card.dataset.id=id;
+
+  card.innerHTML = `
+    <div class="cardHead">
+      <div class="rowTitle">
+        <div style="font-weight:800">Máquina <span class="t-machine">—</span></div>
+        <span class="tag idle t-badge">Aguardando dados</span>
+        <div class="mini">
+        <span class="chip t-miniStatus">—</span>
+         <span class="t-miniExtra" style="display:none">—</span>
+        </div>
+
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="iconBtn toggle" title="Minimizar/Expandir">↕️</button>
+        <button class="iconBtn remove" title="Remover">🗑️</button>
+      </div>
+    </div>
+
+    <div class="cardBody">
+      <div class="row">
+        <div>
+          <div class="label">Máquina (no topo)</div>
+          <input class="f-machine input" placeholder="Ex.: 98" />
+        </div>
+        <div>
+          <div class="label">Tempo por peça (min,seg)</div>
+          <input class="f-time input" inputmode="decimal" placeholder="Ex.: 2,30 / 1:45 / 90s" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <div>
+          <div class="label">Comprimento da peça (mm)</div>
+          <input class="f-length inputNum" type="number" min="1" placeholder="Ex.: 32">
+        </div>
+        <div>
+          <div class="label">Barras inteiras (no alimentador)</div>
+          <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px">
+            <input class="f-bars inputNum" type="number" min="0" value="0">
+            <button class="smallBtn ghost simMinusB" type="button">−1 barra</button>
+            <button class="smallBtn ghost simPlusB" type="button">+1 barra</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mp">
+        <div class="label" style="color:#2b1839;font-weight:800">Barra atual</div>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="${radioName}" value="cheia"> Cheia</label>
+          <label class="pill"><input type="radio" name="${radioName}" value="parcial"> Parcial (mm)</label>
+          <label class="pill"><input type="radio" name="${radioName}" value="pecas" checked> Peças</label>
+        </div>
+        <div class="inline">
+          <div class="blk-mm" style="display:none">
+            <div class="label">mm da barra atual</div>
+            <input class="f-mm-parcial inputNum" type="number" min="0" placeholder="Ex.: 1360">
+          </div>
+          <div class="blk-pcs" style="display:block">
+            <div class="label">peças da barra atual</div>
+            <input class="f-pecas-parcial inputNum" type="number" min="0" placeholder="Ex.: 40">
+          </div>
+        </div>
+        <div class="preview t-mp">Produção possível com esta MP: —</div>
+      </div>
+
+      <!-- Gabaritos (bandejas) -->
+      <div class="gabs">
+        <div class="gabHeader">
+          <div class="label" style="color:#2b1839;font-weight:800">Gabaritos (bandejas) produzidos</div>
+        </div>
+        <div class="gabList"></div>
+        <div class="gabFooter">
+          <button class="smallBtn ghost addGab" type="button">➕ Adicionar gabarito</button>
+          <button class="smallBtn primary finishGabs" type="button">✅ Concluir gabaritos</button>
+          <div class="gabTotal">Total produzido: 0 peças</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <div>
+          <div class="label">Meta da OP (peças)</div>
+          <input class="f-meta inputNum" type="number" min="0" placeholder="Ex.: 1000">
+        </div>
+        <div>
+          <div class="label">Produzidas (peças) — gerado a partir dos gabaritos</div>
+          <input class="f-prod inputNum" type="number" min="0" value="0" readonly>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="num r-turno">—</div><div class="lab">Produção/turno</div></div>
+        <div class="kpi"><div class="num r-tempo">—</div><div class="lab">Tempo por peça</div></div>
+        <div class="kpi"><div class="num r-restop">—</div><div class="lab">Restantes da OP</div></div>
+        <div class="kpi"><div class="num r-capmp">—</div><div class="lab">Capacidade com MP</div></div>
+        <div class="kpi"><div class="num r-fecha">—</div><div class="lab">Encerramento previsto</div></div>
+        <div class="kpi"><div class="num r-horasrest">—</div><div class="lab">Horas restantes (base)</div></div>
+      </div>
+
+      <div class="notice" style="display:none"></div>
+
+      <div class="reqWrap">
+        <h4>Próxima OP</h4>
+        <div class="pills" style="margin-bottom:8px">
+          <label class="pill"><input type="radio" name="preset-${id}" value="sim"> <strong>Preset já trouxe</strong></label>
+          <label class="pill"><input type="radio" name="preset-${id}" value="nao" checked> <strong>Não trouxe</strong></label>
+        </div>
+
+        <div class="whenPreset" style="display:none">
+          <div class="label">Tipo</div>
+          <select class="presetTipo input">
+            <option value="sequencia">⚪ Sequência</option>
+            <option value="azul">🔵 Setup Azul</option>
+            <option value="verde">🟢 Setup Verde</option>
+            <option value="vermelho">🔴 Setup Vermelho</option>
+          </select>
+        </div>
+
+        <div class="whenReq" style="margin-top:8px">
+          <div class="reqGrid">
+            <div>
+              <div class="label">Hora para solicitar</div>
+              <input type="time" class="req-hora input">
+            </div>
+            <div>
+              <div class="label">Código da OP/Item (até 20)</div>
+              <input class="req-codigo input" maxlength="20" placeholder="Ex.: 125.142-1" pattern="[A-Za-z0-9.-]{0,20}">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+list.appendChild(card);
+minimizarOutrosCards(card);        // fecha todos os outros cards
+card.classList.remove('collapsed'); // garante que o novo venha expandido
+
+// UPDATE 2025-10-20 — Foco direto e prioritário no campo "Máquina"
+setTimeout(() => {
+  const inputMachine = card.querySelector('.f-machine');
+  if (inputMachine) {
+    inputMachine.focus({ preventScroll: true });
+    inputMachine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}, 120); // pequeno delay para garantir que o DOM finalize antes de focar
+
+
+// UPDATE 2025-10-20 — Foco direto em "Máquina" e sem zoom
+const inputMachine = card.querySelector('.f-machine');
+if (inputMachine) {
+  inputMachine.focus();
+  inputMachine.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+
+  // ===== events básicos =====
+  card.querySelector('.remove').addEventListener('click',()=>{ if(confirm('Remover esta máquina?')) card.remove(); });
+// UPDATE 2025-10-21 — Minimizar também esconde o bloco "Próxima OP"
+card.querySelector('.toggle').addEventListener('click', () => {
+  const isCollapsed = card.classList.contains('collapsed');
+  minimizarOutrosCards(card);
+  card.classList.toggle('collapsed', !isCollapsed);
+
+  // se colapsar, esconde o bloco da Próxima OP
+  const reqWrap = card.querySelector('.reqWrap');
+  if (!isCollapsed) {
+    reqWrap.style.display = 'none';
+  } else {
+    // reexibe automaticamente se ele for necessário (usa a regra já existente)
+    const restToEndMin = card._calc?.restMin || 9999;
+    if (restToEndMin <= 16 * 60) reqWrap.style.display = 'block';
+  }
+});
+
+
+
+  const fMac=card.querySelector('.f-machine'), tMac=card.querySelector('.t-machine');
+  const syncTitle=()=>{ tMac.textContent=(fMac.value||'').trim()||'—'; };
+  ['input','change','blur'].forEach(ev=>fMac.addEventListener(ev,syncTitle));
+
+  // Enter behavior: não “pula” sozinho entre campos; no gabarito adiciona nova linha
+  card.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){
+      const isGab = e.target && e.target.classList.contains('gabInput');
+      e.preventDefault();
+      if(isGab){ addGabRow(card,''); }
+      else { e.target.blur(); }
+    }
+  });
+
+  // Radios MP
+  const blkMM=card.querySelector('.blk-mm'), blkPCS=card.querySelector('.blk-pcs');
+  card.querySelectorAll(`.pills input[type="radio"][name="${radioName}"]`).forEach(r=>{
+    r.addEventListener('change',()=>{
+      blkMM.style.display = r.value==='parcial' && r.checked ? 'block':'none';
+      blkPCS.style.display = r.value==='pecas'   && r.checked ? 'block':'none';
+      if(r.value!=='parcial') card.querySelector('.f-mm-parcial').value='';
+      if(r.value!=='pecas')   card.querySelector('.f-pecas-parcial').value='';
+      updateMpPreview(card); compute(card);
+    });
+  });
+
+  // Simuladores barras
+  card.querySelector('.simMinusB').addEventListener('click',()=>{ const el=card.querySelector('.f-bars'); el.value=Math.max(0,(parseInt(el.value)||0)-1); updateMpPreview(card); compute(card); });
+  card.querySelector('.simPlusB').addEventListener('click',()=>{ const el=card.querySelector('.f-bars'); el.value=(parseInt(el.value)||0)+1; updateMpPreview(card); compute(card); });
+
+  // Preset/Req toggle
+  const whenPreset=card.querySelector('.whenPreset');
+  const whenReq=card.querySelector('.whenReq');
+  card.querySelectorAll(`input[name="preset-${id}"]`).forEach(r=>{
+    r.addEventListener('change',()=>{
+      const sim=r.value==='sim' && r.checked;
+      whenPreset.style.display=sim?'block':'none';
+      whenReq.style.display=sim?'none':'block';
+      compute(card);
+    });
+  });
+// UPDATE 2025-10-21 — Armazena alterações do bloco de Requisição/Preset
+card.querySelectorAll('.presetTipo, .req-hora, .req-codigo').forEach(el=>{
+  el.addEventListener('input',()=>{ updateReqInfo(card); compute(card); });
+  el.addEventListener('change',()=>{ updateReqInfo(card); compute(card); });
+});
+
+  // Inputs que recalculam
+  card.querySelectorAll('.f-time,.f-length,.f-bars,.f-pecas-parcial,.f-mm-parcial,.f-meta').forEach(el=>{
+    el.addEventListener('input',()=>{ updateMpPreview(card); compute(card); });
+    el.addEventListener('change',()=>{ updateMpPreview(card); compute(card); });
+  });
+
+  // ===== GABARITOS =====
+  card._gabLocked=false;
+  card._gabList = card.querySelector('.gabList');
+  card._gabTotalEl = card.querySelector('.gabTotal');
+  card.querySelector('.addGab').addEventListener('click',()=>addGabRow(card,''));
+  card.querySelector('.finishGabs').addEventListener('click',()=>toggleFinishGabs(card));
+
+  // começa com uma linha
+  addGabRow(card,'');
+
+  // Primeiro compute
+  syncTitle(); updateMpPreview(card); compute(card);
+}
+
+/* Add uma linha de gabarito */
+function addGabRow(card, val){
+  if(card._gabLocked) return; // travado = sem adicionar
+  const row=document.createElement('div');
+  row.className='gabRow';
+  row.innerHTML=`
+    <input class="gabInput inputNum" type="number" min="0" placeholder="Qtd neste gabarito" value="${val||''}">
+    <button type="button" class="gabDel" title="Remover">🗑️</button>
+  `;
+  const inp=row.querySelector('.gabInput');
+  const del=row.querySelector('.gabDel');
+
+  inp.addEventListener('input',()=>updateGabTotal(card));
+  inp.addEventListener('change',()=>updateGabTotal(card));
+  del.addEventListener('click',()=>{ if(card._gabLocked) return; row.remove(); updateGabTotal(card); });
+
+  card._gabList.appendChild(row);
+  inp.focus();
+  updateGabTotal(card);
+}
+
+/* Soma gabaritos → mostra total; NÃO escreve em f-prod até “concluir” */
+function updateGabTotal(card){
+  const vals=Array.from(card._gabList.querySelectorAll('.gabInput')).map(i=>parseInt(i.value,10)||0);
+  const total=vals.reduce((a,b)=>a+b,0);
+  card._gabTotalEl.textContent=`Total produzido: ${total} peças`;
+  if(card._gabLocked){
+    // manter f-prod em sincronia se destravou e travou de novo
+    card.querySelector('.f-prod').value=total;
+    compute(card);
+  }
+}
+
+/* Finaliza/edita gabaritos */
+function toggleFinishGabs(card){
+  const btn=card.querySelector('.finishGabs');
+  card._gabLocked = !card._gabLocked;
+
+  const inputs=card._gabList.querySelectorAll('.gabInput'), deletes=card._gabList.querySelectorAll('.gabDel');
+  inputs.forEach(i=>i.readOnly=card._gabLocked);
+  deletes.forEach(b=>b.disabled=card._gabLocked);
+
+  // atualiza total e joga para f-prod quando conclui
+  const total = Array.from(inputs).map(i=>parseInt(i.value,10)||0).reduce((a,b)=>a+b,0);
+  if(card._gabLocked){
+    card.querySelector('.f-prod').value=total;
+    btn.textContent='✏️ Editar gabaritos';
+    compute(card);
+  }else{
+    btn.textContent='✅ Concluir gabaritos';
+  }
+  updateGabTotal(card);
+}
+
+/* MP Preview */
+function updateMpPreview(card){
+  // Ajustes fixos (se você já tem modal/LS, é só trocar por loadCfg)
+  const barLen=3600;   // mm
+  const bedame=2;      // mm
+  const comp=parseFloat(card.querySelector('.f-length').value);
+  const passo=isFinite(comp)?(comp+bedame):NaN;
+  const bars=parseInt(card.querySelector('.f-bars').value,10)||0;
+  const sel = card.querySelector('.mp .pills input:checked');
+  const mode = sel?sel.value:null;
+  const mmParcial=parseFloat(card.querySelector('.f-mm-parcial').value)||0;
+  const pcsParcial=parseInt(card.querySelector('.f-pecas-parcial').value,10)||0;
+
+  let porBarra=0, atual=0, total=0;
+  if(!isNaN(passo) && passo>0){
+    porBarra=Math.floor(barLen/passo);
+    if(mode==='cheia')       atual=porBarra;
+    else if(mode==='parcial')atual=Math.max(0, Math.floor(mmParcial/passo));
+    else if(mode==='pecas')  atual=Math.max(0, pcsParcial);
+    total=Math.max(0, bars*porBarra + (mode?atual:0));
+  }
+  card.querySelector('.t-mp').textContent=`Produção possível com esta MP: ${isNaN(total)?'—':total+' peças'}`;
+  card._mp={porBarra, atual, total, passo};
+}
+// =======================================================
+// UPDATE 2025-10-21 — Função para salvar requisição/preset no card
+// =======================================================
+function updateReqInfo(card) {
+  if (!card._req) card._req = {};
+
+  const radiosPreset = card.querySelectorAll(`.reqWrap input[type="radio"]`);
+  radiosPreset.forEach(r => {
+    if (r.checked) {
+      card._req.modo = r.value;
+      if (r.value === 'sim') {
+        card._req.tipo = card.querySelector('.presetTipo')?.value || null;
+        card._req.hora = null;
+        card._req.codigo = null;
+      } else if (r.value === 'nao') {
+        card._req.tipo = null;
+        card._req.hora = card.querySelector('.req-hora')?.value || null;
+        card._req.codigo = (card.querySelector('.req-codigo')?.value || '').trim() || null;
+      }
+    }
+  });
+}
+
+/* Compute */
+function compute(card){
+  const baseDT=getBaseDT();
+  $('#baseShift').textContent=shiftName(getShiftWindowFor(baseDT).id);
+
+  const maquina   = (card.querySelector('.f-machine').value||'').trim();
+  const tempoMin  = parseTempoToMinutes(card.querySelector('.f-time').value);
+  const compPeca  = parseFloat(card.querySelector('.f-length').value);
+  const meta      = parseInt(card.querySelector('.f-meta').value,10);
+  let   produzidas= parseInt(card.querySelector('.f-prod').value,10)||0;
+
+  const badge = card.querySelector('.t-badge');
+  const resMsg= card.querySelector('.notice');
+  const reqWrap = card.querySelector('.reqWrap');
+
+  // valida
+  if (isNaN(tempoMin)||tempoMin<=0 || isNaN(compPeca)||compPeca<=0 || isNaN(meta)||meta<0) {
+    badge.textContent='Aguardando dados'; badge.className='tag idle t-badge';
+    resMsg.style.display='block'; resMsg.className='notice'; resMsg.textContent='Preencha tempo, comprimento e meta.';
+    fillOutputs(card, maquina||'—','—','—','—','—','—'); card._calc=null; updateMini(card,null); return;
+  }
+  if(produzidas>meta) produzidas=meta;
+
+  // turno atual
+  const winNow=getShiftWindowFor(baseDT);
+ // UPDATE 2025-10-21 — Corrige cálculo da produção/turno (fixa turno = 480 min)
+const turnoMinutos = 480;
+
+  const prodTurno=Math.floor(turnoMinutos/tempoMin);
+
+  const restantesOP=Math.max(0, meta - produzidas);
+  const mp=card._mp||{total:0, porBarra:0, atual:0};
+  const capacidade=mp.total||0;
+
+  const minRestTurno=Math.max(0, Math.floor((winNow.endDT - baseDT)/60000));
+  const byTempo=Math.floor(minRestTurno/tempoMin);
+  const turnoProducao=Math.max(0, Math.min(byTempo, restantesOP, capacidade));
+  const faltamAposTurno=Math.max(0, restantesOP - turnoProducao);
+
+  // previsão de encerramento usando apenas MP declarada
+  const produciveis=Math.min(restantesOP, capacidade);
+  let restanteMin=produciveis*tempoMin;
+  let endDT=new Date(baseDT);
+  let win=winNow;
+  while(restanteMin>0){
+    const start=endDT>win.startDT?endDT:win.startDT;
+    const winMin=Math.max(0,(win.endDT-start)/60000);
+    const usar=Math.min(restanteMin,winMin);
+    endDT=new Date(start.getTime()+usar*60000);
+    restanteMin-=usar;
+    if(restanteMin<=0) break;
+    win=nextShiftWindow(win.endDT,win.id);
+  }
+  const willEnd=produciveis>0?endDT:null;
+  const restToEndMin = willEnd? Math.max(0, Math.floor((willEnd - baseDT)/60000)) : null;
+
+  // status
+  const diffHoras = willEnd ? (willEnd - baseDT)/3600000 : null;
+  const fechaNesteTurno = !!(willEnd && diffHoras<=8);
+  const fechaProxTurno  = !!(willEnd && diffHoras>8 && diffHoras<=16);
+
+  const motivo = (capacidade===0) ? 'MP' : (produciveis < restantesOP ? 'MP' : 'Meta');
+
+  // req op: limiar fixo 16h aqui
+  const limiar=16;
+  const showReq= restToEndMin!=null && restToEndMin <= limiar*60;
+  reqWrap.style.display=showReq?'block':'none';
+
+  // msg
+  const tempoDisplay = (()=>{const s=Math.round((tempoMin%1)*60); const m=Math.floor(tempoMin); return `${m}m ${pad2(s)}s — ${tempoMin.toFixed(2).replace('.',',')} min`;})();
+  const restFmt = restToEndMin!=null ? `${Math.floor(restToEndMin/60)}h ${pad2(restToEndMin%60)}min` : '—';
+
+  let msgClass='ok', titulo='NÃO VAI ENCERRAR NESTE TURNO!'; let emoji='🟢';
+  if(fechaNesteTurno){ msgClass='bad'; titulo='VAI ENCERRAR NESTE TURNO!'; emoji='🔴'; }
+  else if(fechaProxTurno){ msgClass='warn'; titulo='VAI ENCERRAR NO PRÓXIMO TURNO!'; emoji='🟠'; }
+
+  resMsg.style.display='block';
+  resMsg.className=`notice ${msgClass}`;
+// UPDATE 2025-10-21 — Padroniza mensagem do card com o formato do WhatsApp
+// UPDATE 2025-10-21 — Padroniza visual do card com formato profissional (sem underlines)
+resMsg.innerHTML = `
+  <div class="statusTitle" style="font-size:15px; font-weight:800; margin-bottom:6px;">
+    ${emoji} ${titulo}
+  </div>
+  <div style="font-weight:600; line-height:1.65; color:#3a2a4a; font-size:14px;">
+    ⏱ <strong>Tempo até encerrar:</strong> ${restFmt}<br>
+    🕒 <strong>Vai encerrar:</strong> ${fmtDate(willEnd)} às ${fmtTime(willEnd)} — ${shiftName(getShiftWindowFor(willEnd).id)}<br>
+    🎯 <strong>Meta da OP:</strong> ${meta} peças<br>
+    📦 <strong>Produzidas:</strong> ${produzidas} peças<br>
+    🧮 <strong>Meta do turno:</strong> ${isFinite(tempoMin) && tempoMin > 0 ? Math.floor(480 / tempoMin) : '—'} peças<br>
+    ⚙️ <strong>Tempo da peça:</strong> ${Math.floor(tempoMin)}m${Math.round((tempoMin - Math.floor(tempoMin)) * 60)}s — ${tempoMin.toFixed(2).replace('.', ',')} min<br>
+    <br>
+    ${motivo === 'MP'
+      ? '<span style="color:#7a0000;">🔻 Vai encerrar por falta de matéria-prima.</span>'
+      : '<span style="color:#066e3b;">✅ Vai encerrar por quantidade atingida da OP.</span>'}
+    <br><br>
+    ${(() => {
+      const presetSim = card.querySelector('input[value="sim"]')?.checked;
+      const presetNao = card.querySelector('input[value="nao"]')?.checked;
+      const tipo = card.querySelector('.presetTipo')?.value || '';
+      const tipoNome =
+        tipo === 'sequencia' ? 'Sequência ⚪' :
+        tipo === 'azul' ? 'Setup Azul 🔵' :
+        tipo === 'verde' ? 'Setup Verde 🟢' :
+        tipo === 'vermelho' ? 'Setup Vermelho 🔴' : '';
+      const codigo = card.querySelector('.req-codigo')?.value || '—';
+      const horaReq = card.querySelector('.req-hora')?.value || fmtTime(willEnd);
+
+      if (presetSim) {
+        return `<span>✅ <strong>Preset já trouxe:</strong> ${tipoNome} — às ${fmtTime(willEnd)}</span>`;
+      } else if (presetNao) {
+        return `
+          <span>❌ <strong>Preset não trouxe.</strong></span><br>
+          🕓 <strong>Solicitar às:</strong> ${horaReq}<br>
+          📄 <strong>Item:</strong> ${codigo}
+        `;
+      } else {
+        return `<span>⚙️ <strong>Informação de preset não definida.</strong></span>`;
+      }
+    })()}
+  </div>
+`;
+
+
+
+  // outputs
+  const fecharFrase = willEnd ? `${fmtDate(willEnd)} — ${fmtTime(willEnd)} — ${shiftName(getShiftWindowFor(willEnd).id)}` : '—';
+  fillOutputs(card, maquina,
+              `${isFinite(prodTurno)?prodTurno:'—'} peças`,
+              tempoDisplay,
+              `${Math.max(0, meta - (parseInt(card.querySelector('.f-prod').value,10)||0))} peças`,
+              `${capacidade} peças`,
+              fecharFrase);
+  card.querySelector('.r-horasrest').textContent = willEnd ? restFmt : '—';
+
+  // badge topo
+  const badgeEl=card.querySelector('.t-badge');
+  if (fechaNesteTurno){ badgeEl.textContent=`Neste turno — Motivo: ${motivo==='MP'?'Falta de MP':'Meta'}`; badgeEl.className='tag bad t-badge'; }
+  else if (fechaProxTurno){ badgeEl.textContent='Próx. turno'; badgeEl.className='tag warn t-badge'; }
+  else { badgeEl.textContent='OK'; badgeEl.className='tag ok t-badge'; }
+
+// --- coleta informações do bloco “Próxima OP” ---
+const radiosPreset = card.querySelectorAll(`.reqWrap input[type="radio"]`);
+let presetModo = null, presetTipo = null, presetHora = null, presetCodigo = null;
+radiosPreset.forEach(r => {
+  if (r.checked) {
+    presetModo = r.value;
+    if (presetModo === 'sim') {
+      presetTipo = card.querySelector('.presetTipo')?.value || null;
+    } else if (presetModo === 'nao') {
+      presetHora = card.querySelector('.req-hora')?.value || null;
+      presetCodigo = (card.querySelector('.req-codigo')?.value || '').trim() || null;
+    }
+  }
+});
+
+// --- salva tudo no objeto interno do card ---
+card._calc = {
+  maquina,
+  endDT: willEnd,
+  restMin: restToEndMin,
+  fechaNesteTurno,
+  fechaProxTurno,
+  motivoTipo: (motivo === 'MP' ? 'mp' : 'meta'),
+  preset: {
+    modo: presetModo,
+    tipo: presetTipo,
+    hora: presetHora,
+    codigo: presetCodigo
+  }
+};
+
+// UPDATE 2025-10-21 — salva também as infos de requisição/preset no cálculo
+updateReqInfo(card);
+card._calc = card._calc || {};
+card._calc.req = { ...card._req };
+
+updateMini(card, card._calc);
+
+}
+
+function fillOutputs(card,mac,rTurno,rTempo,rRest,rCap,rFecha){
+  card.querySelector('.t-machine').textContent=mac||'—';
+  card.querySelector('.r-turno').textContent=rTurno;
+  card.querySelector('.r-tempo').textContent=rTempo;
+  card.querySelector('.r-restop').textContent=rRest;
+  card.querySelector('.r-capmp').textContent=rCap;
+  card.querySelector('.r-fecha').textContent=rFecha||'—';
+}
+
+/* header mini chips */
+function updateMini(card, info) {
+  const miniStatus = card.querySelector('.t-miniStatus');
+  const miniExtra  = card.querySelector('.t-miniExtra');
+
+  if (!info) {
+    miniStatus.textContent = '—';
+    miniStatus.className = 'chip';
+    miniExtra.style.display = 'none';
+    return;
+  }
+
+  // === Define o status principal (cor e texto)
+  if (info.fechaNesteTurno) {
+    miniStatus.textContent = 'Neste turno';
+    miniStatus.className = 'chip bad';
+  } else if (info.fechaProxTurno) {
+    miniStatus.textContent = 'Próx. turno';
+    miniStatus.className = 'chip warn';
+  } else {
+    miniStatus.textContent = 'OK';
+    miniStatus.className = 'chip ok';
+  }
+
+  // === Hora prevista de encerramento
+  const endDT = info.endDT || null;
+  const horaPrev = endDT ? fmtTime(endDT) : '';
+
+  // === Define o conteúdo extra
+  const simPreset = card.querySelector(`.reqWrap .pills input[value="sim"]`)?.checked;
+
+  if (simPreset) {
+    const v = card.querySelector('.presetTipo').value;
+    const label =
+      v === 'sequencia' ? 'Sequência' :
+      v === 'azul'      ? 'Setup Azul' :
+      v === 'verde'     ? 'Setup Verde' : 'Setup Vermelho';
+    miniExtra.textContent = `${label}${horaPrev ? ' / ' + horaPrev : ''}`;
+    miniExtra.style.display = 'inline-block';
+  } else {
+    const h   = card.querySelector('.req-hora').value || '';
+    const cod = (card.querySelector('.req-codigo').value || '').trim();
+    if (h || cod) {
+      miniExtra.textContent = `${h || '—'}${cod ? ' / ' + cod : ''}`;
+      miniExtra.style.display = 'inline-block';
+    } else {
+      miniExtra.style.display = 'none';
+    }
+  }
+}
+
+// ===== FECHA OUTROS CARDS =====
+function minimizarOutrosCards(cardAtual) {
+  $$('#list .card').forEach(card => {
+    if (card !== cardAtual) card.classList.add('collapsed');
+  });
+}
+
+/* Boot */
+document.addEventListener('DOMContentLoaded',()=>{
+  setBaseToNow(); updateBaseShift();
+  addCard(false);
+  ['baseDate','baseTime'].forEach(id=>{
+    document.getElementById(id).addEventListener('change',()=>{ updateBaseShift(); $$('#list .card').forEach(c=>compute(c)); });
+  });
+});
+// =======================================================
+// UPDATE 2025-10-20 — Envio de resumo geral via WhatsApp
+// =======================================================
+// =======================================================
+// UPDATE 2025-10-20 — Envio de resumo geral via WhatsApp (com Preset)
+// =======================================================
+// =======================================================
+// UPDATE 2025-10-20 — WhatsApp com preset persistente (usa card._calc.preset)
+// =======================================================
+// =======================================================
+// UPDATE 2025-10-21 — WhatsApp com dados salvos de requisição/preset
+// =======================================================
+// =======================================================
+// UPDATE 2025-10-20 — Resumo Clean EXPERTLINK (formatação refinada + emojis neutros)
+// =======================================================
+// =======================================================
+// UPDATE 2025-10-20 — WhatsApp resumo profissional (com data, divisórias e status preset)
+// =======================================================
+// =============================================================
+// UPDATE 2025-10-20 — FUNÇÃO DEFINITIVA enviarResumoWhatsApp()
+// Sistema EXPERTLINK / EXPERTCNC — MODO SEGURO CIRÚRGICO
+// =============================================================
+// Objetivo:
+// Gera automaticamente um relatório completo, limpo e formatado
+// para envio via WhatsApp, consolidando todas as máquinas (cards)
+// com informações de status, previsão, MP, OP e preset.
+// =============================================================
+// =============================================================
+// UPDATE 2025-10-20 — enviarResumoWhatsApp v2.2
+// Correção: mostra hora de encerramento no preset "já trouxe"
+// =============================================================
+// =============================================================
+// UPDATE 2025-10-20 — enviarResumoWhatsApp v3.1
+// Adiciona tempo da peça em formato duplo: mm:ss + decimal
+// =============================================================
+// =============================================================
+// UPDATE 2025-10-20 — enviarResumoWhatsApp v3.2
+// Ajusta regras de status e remove bloco de preset para máquinas OK
+// =============================================================
+// =============================================================
+// UPDATE 2025-10-20 — enviarResumoWhatsApp v3.3
+// Corrige detecção de status (sem falsos positivos com "NÃO VAI ENCERRAR")
+// Garante layout limpo e resultados coerentes com o card
+// =============================================================
+function enviarResumoWhatsApp() {
+  const cards = document.querySelectorAll('.card');
+  if (!cards.length) {
+    alert('Nenhuma máquina encontrada!');
+    return;
+  }
+
+  const agora = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const dataHoje = `${pad(agora.getDate())}/${pad(agora.getMonth() + 1)}/${agora.getFullYear()}`;
+  const horaAgora = `${pad(agora.getHours())}:${pad(agora.getMinutes())}`;
+
+  let resumo = `📊 *RESUMO GERAL — INÍCIO DO TURNO*\n_Dia ${dataHoje}_\n\n`;
+
+  cards.forEach((card, idx) => {
+    const maquina = card.querySelector('.f-machine')?.value?.trim() || '—';
+    const notice = card.querySelector('.notice');
+    const msg = notice?.innerText?.trim() || '';
+    if (!msg || msg.includes('Preencha tempo')) return;
+
+    const prod = parseInt(card.querySelector('.f-prod')?.value || '0', 10);
+    const meta = parseInt(card.querySelector('.f-meta')?.value || '0', 10);
+    const tempoMin = parseTempoToMinutes(card.querySelector('.f-time')?.value || '0');
+
+    // === Tempo formatado duplo ===
+    let tempoFmt = '—', tempoDec = '—';
+    if (isFinite(tempoMin) && tempoMin > 0) {
+      const m = Math.floor(tempoMin);
+      const s = Math.round((tempoMin - m) * 60);
+      tempoFmt = `${m}m${s > 0 ? s + 's' : ''}`;
+      tempoDec = tempoMin.toFixed(2).replace('.', ',');
+    }
+
+    const metaTurno = isFinite(tempoMin) && tempoMin > 0 ? Math.floor(480 / tempoMin) : '—';
+    const matchTempoRest = msg.match(/(\d+)h\s*(\d{1,2})min/);
+    const tempoRest = matchTempoRest ? `${matchTempoRest[1]}h ${matchTempoRest[2]}min` : '—';
+    const horaEncMatch = msg.match(/às\s(\d{2}:\d{2})/);
+    const horaEnc = horaEncMatch ? horaEncMatch[1] : '—';
+
+    // === DETECÇÃO DE STATUS (corrigida) ===
+    const texto = msg.toUpperCase();
+    let status = { cor: '🟩', txt: 'NÃO FECHA!' };
+
+    if (texto.includes('NÃO VAI ENCERRAR')) {
+      status = { cor: '🟩', txt: 'NÃO FECHA!' };
+    } else if (texto.includes('PRÓXIMO TURNO')) {
+      status = { cor: '🟧', txt: 'PRÓXIMO TURNO!' };
+    } else if (texto.includes('NESTE TURNO')) {
+      status = { cor: '🟥', txt: 'ENCERRA NESTE TURNO!' };
+    }
+
+    // === Montagem do resumo ===
+    resumo += `*TNL ${maquina}* - ${status.cor} ${status.txt}\n`;
+    resumo += `*Tempo até encerrar:* _${tempoRest}_\n`;
+    resumo += `*Meta da OP:* _${meta} peças_\n`;
+    resumo += `*Produzidas:* _${prod} peças_\n`;
+    resumo += `*Meta do turno:* _${metaTurno} peças_\n`;
+    resumo += `*Tempo da peça:* _${tempoFmt} — ${tempoDec} min_\n`;
+
+    // === Preset logic ===
+    const presetSim = card.querySelector(`input[type="radio"][value="sim"]`)?.checked;
+    const presetNao = card.querySelector(`input[type="radio"][value="nao"]`)?.checked;
+    const tipo = card.querySelector('.presetTipo')?.value || '';
+    const tipoNome =
+      tipo === 'sequencia' ? 'Sequência ⚪' :
+      tipo === 'azul' ? 'Setup Azul 🔵' :
+      tipo === 'verde' ? 'Setup Verde 🟢' :
+      tipo === 'vermelho' ? 'Setup Vermelho 🔴' : '';
+    const codigo = card.querySelector('.req-codigo')?.value || '—';
+    const horaReq = card.querySelector('.req-hora')?.value || horaEnc;
+
+    if (status.cor === '🟩') {
+      resumo += "_*Não há necessidade de solicitar nova OP*_\n";
+    } else {
+      resumo += `\n*Preset já trouxe?*\n`;
+      if (presetSim) {
+        resumo += `✅ _SIM_ — *${tipoNome}* às *${horaEnc}*\n`;
+      } else if (presetNao) {
+        resumo += `❌ _NÃO_ — Solicitar às *${horaReq}*\n_Item:_ *${codigo}*\n`;
+      } else {
+        resumo += `⚙️ _Informação não definida._\n`;
+      }
+    }
+
+    if (idx < cards.length - 1) resumo += `──────────────────────────────\n`;
+    resumo += `\n`;
+  });
+
+  resumo += `🕒 *Gerado às ${horaAgora} pelo sistema EXPERTLINK* ✅`;
+
+  const textoCodificado = encodeURIComponent(resumo);
+  window.open(`https://wa.me/?text=${textoCodificado}`, '_blank');
+}
+
+
+</script>
+<script>
+// UPDATE 2025-10-20 — Registro do PWA Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(() => console.log('Service Worker registrado com sucesso.'))
+    .catch(err => console.error('Falha ao registrar o Service Worker:', err));
+}
+</script>
+
+</body>
+</html>
