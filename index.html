@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#07141c">
-  <title>Tempo da Linha | VENANC Tools</title>
+  <title>Tempo da Linha | VENANC Tools V6</title>
   <style>
     :root {
       --bg: #0b1117;
@@ -544,6 +544,95 @@
       .projectionReasonRow { align-items: flex-start; flex-direction: column; }
       .projectionReasonRow strong { text-align: left; }
     }
+
+    /* V6 — interface compacta para uso no celular */
+    main { max-width: 1120px; padding-top: 12px; }
+    .compactControl {
+      display: grid;
+      grid-template-columns: minmax(250px, 1fr) minmax(280px, .9fr) auto;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 10px;
+      border: 1px solid var(--line-dark);
+      border-radius: 16px;
+      padding: 12px;
+      background: linear-gradient(145deg, #162630, #101b23);
+      box-shadow: 0 12px 28px rgba(0,7,11,.14);
+    }
+    .compactClockBlock { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:45px; }
+    .compactLabel { display:block; color:#9fb5bd; font-size:10px; font-weight:950; letter-spacing:.11em; }
+    .compactClockBlock strong { display:block; margin-top:4px; color:var(--primary); font-size:15px; }
+    .shiftPill { display:inline-flex; align-items:center; min-height:32px; padding:5px 10px; border:1px solid rgba(255,255,255,.12); border-radius:999px; color:#dff8f5; background:rgba(255,255,255,.055); font-size:12px; font-weight:900; white-space:nowrap; }
+    .compactBaseGrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .compactControl .field label { margin-bottom:4px; }
+    .compactControl .input { min-height:42px; }
+    .compactActions { display:flex; gap:8px; }
+    .compactActions .btn { min-height:42px; }
+    .summaryGrid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+    .summaryCard { min-height:54px; padding:9px 11px; border-radius:12px; }
+    .summaryCard span { font-size:10px; }
+    .summaryCard strong { margin-top:3px; font-size:22px; }
+    .summaryIcon { display:none; }
+    .cardBody { padding:12px 12px 14px 16px; }
+    .section { padding:10px; }
+    .compactOptional { padding:9px 10px; }
+    .compactBars { grid-template-columns:1fr 46px 46px !important; }
+    .barStep { min-width:46px; width:46px; padding:0; font-size:20px; }
+    .preview { padding:8px 9px; font-size:12px; }
+    .projectionCard { margin-top:10px; border-radius:14px; }
+    .projectionTop { padding:11px 12px 10px; }
+    .projectionLabel { font-size:9px; }
+    .projectionTitle { margin-top:4px; font-size:20px; }
+    .projectionChip { min-height:27px; padding:5px 8px; font-size:10px; }
+    .compactProjectionGrid { display:grid; grid-template-columns:1.1fr .78fr 1fr; border-top:1px solid #e3ebed; background:rgba(255,255,255,.58); }
+    .compactProjectionMain, .compactProjectionMetric { min-width:0; padding:11px 12px; border-right:1px solid #e3ebed; }
+    .compactProjectionMetric:last-child { border-right:0; }
+    .compactProjectionMain span, .compactProjectionMetric span { display:block; color:#74868d; font-size:9px; font-weight:950; letter-spacing:.10em; text-transform:uppercase; }
+    .compactProjectionMain .projectionTime { margin-top:5px; font-size:31px; }
+    .compactProjectionMain small { display:block; margin-top:5px; color:#687b82; font-size:11px; font-weight:850; }
+    .compactProjectionMetric strong { display:block; margin-top:8px; color:#1b3741; font-size:18px; line-height:1.08; letter-spacing:-.04em; overflow-wrap:anywhere; }
+    .projectionStats { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .projectionStat { padding:10px 12px; }
+    .projectionStat strong { margin-top:5px; font-size:18px; }
+    .requestAutoHint { margin-top:4px; font-size:10px; }
+    .fixedRuleText { min-height:45px; display:flex; align-items:center; border:1px solid var(--line); border-radius:11px; padding:8px 10px; color:#415963; background:#f4f8f9; font-size:13px; font-weight:850; }
+    @media (max-width: 820px) {
+      .compactControl { grid-template-columns:1fr; }
+      .compactActions .btn { flex:1; }
+    }
+    @media (max-width: 530px) {
+      main { padding:10px 9px 76px; }
+      .compactControl { gap:8px; padding:10px; border-radius:14px; }
+      .compactBaseGrid { grid-template-columns:1fr 1fr; }
+      .compactActions { display:grid; grid-template-columns:1fr 1fr; }
+      .summaryGrid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; }
+      .summaryCard { min-height:50px; padding:7px 7px; }
+      .summaryCard span { font-size:8px; letter-spacing:.045em; }
+      .summaryCard strong { font-size:19px; }
+      .cardHead { grid-template-columns:minmax(0,1fr) auto; padding:11px 10px 11px 15px; }
+      .headActions { justify-content:flex-end; }
+      .machineToken { min-width:50px; height:42px; font-size:17px; }
+      .cardName strong { font-size:16px; }
+      .miniText { font-size:11px; }
+      .badge { min-height:24px; padding:3px 7px; font-size:9px; }
+      .grid2, .grid3 { grid-template-columns:1fr; gap:8px; margin-bottom:8px; }
+      .compactInputs { grid-template-columns:1fr 1fr; }
+      .compactInputs.grid3 { grid-template-columns:1fr 1fr; }
+      .compactInputs.grid3 .field:last-child { grid-column:1 / -1; }
+      .inlineControls { grid-template-columns:1fr 46px 46px !important; }
+      .segmented label { min-height:33px; padding:5px 8px; font-size:12px; }
+      .compactProjectionGrid { grid-template-columns:1fr 1fr; }
+      .compactProjectionMain { grid-column:1 / -1; border-right:0; border-bottom:1px solid #e3ebed; }
+      .compactProjectionMetric { padding:10px 11px; }
+      .compactProjectionMetric strong { font-size:16px; }
+      .projectionStats { grid-template-columns:repeat(3,minmax(0,1fr)); }
+      .projectionStat { padding:9px 8px; }
+      .projectionStat span { font-size:8px; }
+      .projectionStat strong { font-size:17px; }
+      .btn { width:auto; }
+      .toolbar .btn { width:auto; }
+      .requestBox .grid2 { grid-template-columns:1fr; }
+    }
   </style>
 </head>
 <body>
@@ -576,68 +665,47 @@
   </header>
 
   <main>
-    <section class="opsOverview" aria-label="Contexto operacional">
-      <div class="overviewMain">
+    <section class="compactControl" aria-label="Controle da projeção">
+      <div class="compactClockBlock">
         <div>
-          <div class="eyebrow">TEMPO DA LINHA</div>
-          <h1>Projeção operacional da célula</h1>
-        </div>
-        <div class="overviewClock">
-          <span>HORÁRIO ATUAL</span>
+          <span class="compactLabel">HORÁRIO ATUAL</span>
           <strong id="liveClock">--/--/---- · --:--:--</strong>
-          <button class="btn btnGhost overviewWhatsBtn" id="whatsBtn" type="button">↗ Enviar resumo</button>
+        </div>
+        <span class="shiftPill" id="baseShift">-</span>
+      </div>
+      <div class="compactBaseGrid">
+        <div class="field">
+          <label for="baseDate">Data-base</label>
+          <input class="input" id="baseDate" type="date">
+        </div>
+        <div class="field">
+          <label for="baseTime">Hora-base</label>
+          <input class="input" id="baseTime" type="time" step="60">
         </div>
       </div>
-
-      <section class="basePanel" aria-label="Base do cálculo">
-        <div class="panelHeading">
-          <div>
-            <strong>Base do cálculo</strong><br>
-            <span>Horário utilizado nas projeções</span>
-          </div>
-          <button class="btn btnGhost" id="useNowBtn" type="button">Usar horário atual</button>
-        </div>
-        <div class="baseGrid">
-          <div class="field">
-            <label for="baseDate">Data</label>
-            <input class="input" id="baseDate" type="date">
-          </div>
-          <div class="field">
-            <label for="baseTime">Hora</label>
-            <input class="input" id="baseTime" type="time" step="60">
-          </div>
-          <div class="metricBlock">
-            <div>
-              <div class="label">Turno da base</div>
-              <div class="value" id="baseShift">-</div>
-            </div>
-            <span class="softPill">Brasília</span>
-          </div>
-        </div>
-      </section>
+      <div class="compactActions">
+        <button class="btn btnGhost" id="useNowBtn" type="button">Usar agora</button>
+        <button class="btn btnPrimary" id="whatsBtn" type="button">↗ Enviar resumo</button>
+      </div>
     </section>
 
     <section class="summaryGrid" aria-label="Resumo da célula">
       <article class="summaryCard">
-        <div><span>Máquinas cadastradas</span><strong id="summaryTotal">0</strong></div>
-        <div class="summaryIcon">Σ</div>
+        <div><span>Máquinas</span><strong id="summaryTotal">0</strong></div>
       </article>
       <article class="summaryCard bad">
-        <div><span>Encerram neste turno</span><strong id="summaryBad">0</strong></div>
-        <div class="summaryIcon">!</div>
+        <div><span>&lt; 8h</span><strong id="summaryBad">0</strong></div>
       </article>
       <article class="summaryCard warn">
-        <div><span>Encerram no próximo</span><strong id="summaryWarn">0</strong></div>
-        <div class="summaryIcon">◷</div>
+        <div><span>8h a 16h</span><strong id="summaryWarn">0</strong></div>
       </article>
       <article class="summaryCard ok">
-        <div><span>Não encerram</span><strong id="summaryOk">0</strong></div>
-        <div class="summaryIcon">✓</div>
+        <div><span>&gt; 16h</span><strong id="summaryOk">0</strong></div>
       </article>
     </section>
 
     <div class="cards" id="cards"></div>
-    <div class="empty" id="emptyState">Nenhuma máquina cadastrada. Use <strong>＋ Máquina</strong> para iniciar a projeção.</div>
+    <div class="empty" id="emptyState">Nenhuma máquina cadastrada.</div>
   </main>
 
   <dialog id="settingsModal">
@@ -658,9 +726,9 @@
           </div>
         </div>
         <div class="grid2">
-          <div class="field">
-            <label for="requestLimit">Mostrar próxima OP até (horas)</label>
-            <input class="input" id="requestLimit" type="number" min="1" step="1">
+          <div class="field fixedRuleBox">
+            <label>Regra de encerramento</label>
+            <div class="fixedRuleText">🟥 menos de 8h · 🟧 menos de 16h</div>
           </div>
           <div class="field">
             <label for="turnMinutes">Meta por turno usa (minutos)</label>
@@ -685,13 +753,13 @@
           <div class="machineToken" data-role="machineToken">--</div>
           <div class="cardIdentity">
             <div class="cardName">
-              <strong>Máquina <span data-role="titleMachine">-</span></strong>
+              <strong>TNL <span data-role="titleMachine">-</span></strong>
               <span class="badge" data-role="statusBadge">Aguardando dados</span>
             </div>
             <div class="cardMini">
-              <span class="miniText" data-role="miniRest">Preencha os dados da máquina</span>
+              <span class="miniText" data-role="miniRest">Preencha os dados</span>
               <span class="dot">•</span>
-              <span class="miniText" data-role="miniEnd">Sem previsão calculada</span>
+              <span class="miniText" data-role="miniEnd">Sem previsão</span>
             </div>
           </div>
         </div>
@@ -702,21 +770,19 @@
       </div>
 
       <div class="cardBody">
-        <div class="grid2">
+        <div class="grid2 compactInputs">
           <div class="field">
             <label>Máquina</label>
-            <input class="input" data-field="machine" placeholder="Ex.: 098">
+            <input class="input" data-field="machine" placeholder="Ex.: 95">
           </div>
           <div class="field">
-            <label>Tempo por peça</label>
-            <input class="input" data-field="timeInput" inputmode="decimal" placeholder="Ex.: 2,30 · 1:45 · 90">
+            <label>Ciclo</label>
+            <input class="input" data-field="timeInput" inputmode="decimal" placeholder="Ex.: 2,30">
           </div>
         </div>
 
-        <div class="section">
-          <div class="sectionTitle">
-            <div>Matéria-prima da máquina<small>Informe a barra atual e as barras inteiras do alimentador</small></div>
-          </div>
+        <div class="section mpSection">
+          <div class="sectionTitle"><div>Matéria-prima</div></div>
           <div class="segmented" data-role="barMode"></div>
           <div class="grid2" style="margin-top:10px">
             <div class="field" data-role="partialMmWrap">
@@ -729,37 +795,34 @@
             </div>
           </div>
           <div class="field" style="margin-top:10px">
-            <label>Barras inteiras no alimentador</label>
-            <div class="inlineControls">
+            <label>Barras inteiras</label>
+            <div class="inlineControls compactBars">
               <input class="input" data-field="fullBars" type="number" min="0" step="1">
-              <button class="btn btnLight" data-action="minusBar" type="button">− 1 barra</button>
-              <button class="btn btnLight" data-action="plusBar" type="button">＋ 1 barra</button>
+              <button class="btn btnLight barStep" data-action="minusBar" type="button">−</button>
+              <button class="btn btnLight barStep" data-action="plusBar" type="button">＋</button>
             </div>
           </div>
-          <div class="preview" data-role="mpPreview">Produção possível com esta MP: -</div>
+          <div class="preview" data-role="mpPreview">Capacidade com MP: -</div>
         </div>
 
-        <div class="grid2" style="margin-top:10px">
+        <div class="grid3 compactInputs" style="margin-top:10px">
           <div class="field">
-            <label>Meta da ordem / OP (peças)</label>
+            <label>Meta da OP</label>
             <input class="input" data-field="target" type="number" min="0" step="1" placeholder="Ex.: 1000">
           </div>
           <div class="field">
-            <label>Comprimento da peça (mm)</label>
+            <label>Peça (mm)</label>
             <input class="input" data-field="pieceLength" type="number" min="1" step="0.01" placeholder="Ex.: 32">
           </div>
-        </div>
-
-        <div class="grid2" style="margin-top:10px">
           <div class="field">
-            <label>Já produzidas na OP <span class="optionalTag">OPCIONAL</span></label>
-            <input class="input" data-field="producedManual" type="number" min="0" step="1" placeholder="Sem preencher, considera 0">
+            <label>Produzidas <span class="optionalTag">OPCIONAL</span></label>
+            <input class="input" data-field="producedManual" type="number" min="0" step="1" placeholder="0">
           </div>
         </div>
 
-        <div class="section" data-role="traysSection">
+        <div class="section compactOptional" data-role="traysSection">
           <div class="sectionTitle">
-            <div>Gabaritos produzidos <span class="optionalTag">OPCIONAL</span><small>Use somente para somar quantidades por gabarito</small></div>
+            <div>Gabaritos <span class="optionalTag">OPCIONAL</span></div>
             <button class="btn btnLight" data-action="toggleTrays" type="button">Abrir</button>
           </div>
           <div class="sectionContent">
@@ -767,54 +830,43 @@
             <div class="trayList" data-role="trayList" style="margin-top:8px"></div>
             <div class="trayFooter">
               <button class="btn btnLight" data-action="addTray" type="button">＋ Gabarito</button>
-              <button class="btn btnPrimary" data-action="lockTrays" type="button">Concluir gabaritos</button>
+              <button class="btn btnPrimary" data-action="lockTrays" type="button">Concluir</button>
             </div>
           </div>
         </div>
 
-        <div class="grid2" style="margin-top:10px">
-          <div class="field">
-            <label>Produzidas consideradas no cálculo</label>
-            <input class="input" data-role="producedOutput" readonly>
-          </div>
-        </div>
-
-        <div class="kpis" data-role="kpis"></div>
         <div class="projectionCard" data-role="projectionCard">
           <div class="projectionTop">
             <div>
-              <span class="projectionLabel">Resultado da projeção</span>
+              <span class="projectionLabel">Projeção</span>
               <strong class="projectionTitle" data-role="projectionTitle">Aguardando dados</strong>
             </div>
             <span class="projectionChip" data-role="projectionChip">Sem cálculo</span>
           </div>
-          <div class="projectionHeroGrid">
-            <div class="projectionMainMetric">
-              <span>Encerramento previsto</span>
-              <strong class="projectionDate" data-role="projectionEndDate">-</strong>
+          <div class="compactProjectionGrid">
+            <div class="compactProjectionMain">
+              <span>Encerramento</span>
               <strong class="projectionTime" data-role="projectionEndTime">--:--</strong>
-              <small class="projectionShift" data-role="projectionEndShift">-</small>
+              <small><span data-role="projectionEndDate">-</span> · <span data-role="projectionEndShift">-</span></small>
             </div>
-            <div class="projectionCountdown">
-              <span>Tempo restante</span>
+            <div class="compactProjectionMetric">
+              <span>Restante</span>
               <strong data-role="projectionRest">-</strong>
             </div>
-          </div>
-          <div class="projectionReasonRow">
-            <span>Motivo previsto</span>
-            <strong data-role="projectionReason">-</strong>
+            <div class="compactProjectionMetric">
+              <span>Motivo</span>
+              <strong data-role="projectionReason">-</strong>
+            </div>
           </div>
           <div class="projectionStats">
             <div class="projectionStat"><span>Produzidas</span><strong data-role="projectionProduced">0</strong></div>
-            <div class="projectionStat"><span>Restantes da OP</span><strong data-role="projectionRemaining">0</strong></div>
-            <div class="projectionStat"><span>Capacidade com MP</span><strong data-role="projectionCapacity">0</strong></div>
+            <div class="projectionStat"><span>Saldo OP</span><strong data-role="projectionRemaining">0</strong></div>
+            <div class="projectionStat"><span>MP</span><strong data-role="projectionCapacity">0</strong></div>
           </div>
         </div>
 
         <div class="section requestBox" data-role="requestBox">
-          <div class="sectionTitle">
-            <div>Próxima OP / Preset<small>Informações para acompanhamento</small></div>
-          </div>
+          <div class="sectionTitle"><div>Próxima OP / Preset</div></div>
           <div class="segmented" data-role="presetMode"></div>
           <div class="grid2" data-role="presetYesWrap" style="margin-top:10px">
             <div class="field">
@@ -829,12 +881,12 @@
           </div>
           <div class="grid2" data-role="presetNoWrap" style="margin-top:10px">
             <div class="field">
-              <label>Hora para solicitar <span class="optionalTag">AUTOMÁTICO</span></label>
-              <input class="input autoCalculated" data-field="requestTime" type="time" step="60" readonly>
-              <small class="requestAutoHint" data-role="requestTimeHint">Calculada pelo encerramento previsto.</small>
+              <label>Solicitar às <span class="optionalTag">AUTO</span></label>
+              <input class="input autoCalculated" data-field="requestTime" type="text" inputmode="numeric" readonly>
+              <small class="requestAutoHint" data-role="requestTimeHint">Automático pela previsão.</small>
             </div>
             <div class="field">
-              <label>Código da OP / Item</label>
+              <label>Item</label>
               <input class="input" data-field="itemCode" maxlength="30" placeholder="Ex.: 125.142-1">
             </div>
           </div>
@@ -856,7 +908,7 @@
       6. Campo direto de produzidas e relatório WhatsApp mais enxuto.
     */
 
-    const STORAGE_KEY = "expertcnc-reformulado-v1";
+    const STORAGE_KEY = "expertcnc-reformulado-v1"; // Mantido para preservar os dados já cadastrados
     const DEFAULT_SETTINGS = {
       barLength: 3600,
       kerfWidth: 2,
@@ -895,7 +947,6 @@
       modal: document.querySelector("#settingsModal"),
       barLength: document.querySelector("#barLength"),
       kerfWidth: document.querySelector("#kerfWidth"),
-      requestLimit: document.querySelector("#requestLimit"),
       turnMinutes: document.querySelector("#turnMinutes"),
       liveClock: document.querySelector("#liveClock"),
       summaryTotal: document.querySelector("#summaryTotal"),
@@ -1061,11 +1112,10 @@
       return `${m}m ${pad2(s)}s · ${minutes.toFixed(2).replace(".", ",")} min`;
     }
 
-    function getOperationalStatus(baseDT, endDT) {
-      const current = getShiftWindowFor(baseDT);
-      const next = nextShiftWindow(current.endDT, current.id);
-      if (endDT <= current.endDT) return "now";
-      if (endDT <= next.endDT) return "next";
+    function getOperationalStatus(restMin) {
+      if (!Number.isFinite(restMin)) return "idle";
+      if (restMin < 8 * 60) return "now";
+      if (restMin < 16 * 60) return "next";
       return "ok";
     }
 
@@ -1180,7 +1230,7 @@
 
       const restMin = Math.max(0, Math.floor((endDT - baseDT) / 60000));
       const reason = producible < remainingOP ? "mp" : "meta";
-      const status = getOperationalStatus(baseDT, endDT);
+      const status = getOperationalStatus(restMin);
       const labels = {
         now: ["Neste turno", "bad", "bad", "Vai encerrar neste turno."],
         next: ["Próximo turno", "warn", "warn", "Vai encerrar no próximo turno."],
@@ -1206,7 +1256,7 @@
         reason,
         endDT,
         restMin,
-        showRequest: restMin <= (parseInteger(state.settings.requestLimit) || 16) * 60,
+        showRequest: restMin < 16 * 60,
         kpis: buildKpis(metaTurno, tempoMin, remainingOP, capacity, endDT, restMin)
       };
     }
@@ -1292,11 +1342,9 @@
       ]);
       node.querySelector('[data-role="partialMmWrap"]').style.display = machine.barMode === "partialMm" ? "block" : "none";
       node.querySelector('[data-role="partialPiecesWrap"]').style.display = machine.barMode === "pieces" ? "block" : "none";
-      node.querySelector('[data-role="mpPreview"]').textContent = `Produção possível com esta MP: ${calc.capacity} ${plural(calc.capacity, "peça", "peças")} · ${calc.perBar} por barra inteira`;
+      node.querySelector('[data-role="mpPreview"]').textContent = `Capacidade com MP: ${calc.capacity} ${plural(calc.capacity, "peça", "peças")} · ${calc.perBar} por barra`;
 
       renderTrays(node, machine, calc);
-      node.querySelector('[data-role="producedOutput"]').value = `${calc.produced} ${plural(calc.produced, "peça", "peças")} · ${calc.producedSource || "não informado"}`;
-      renderKpis(node, calc.kpis);
       renderNotice(node, calc);
       renderRequest(node, machine, calc);
       bindActions(node, machine);
@@ -1327,8 +1375,13 @@
       input.value = machine[field] ?? "";
       input.addEventListener("input", () => {
         machine[field] = input.value;
+        if (field === "machine") {
+          const token = root.querySelector('[data-role="machineToken"]');
+          const title = root.querySelector('[data-role="titleMachine"]');
+          if (token) token.textContent = input.value || "--";
+          if (title) title.textContent = input.value || "-";
+        }
         saveState();
-        if (input.tagName !== "SELECT") scheduleLiveRender(machine.id, field, input);
       });
       input.addEventListener("change", () => {
         machine[field] = input.value;
@@ -1479,11 +1532,11 @@
         const calculatedTime = fmtTime(calc.endDT);
         machine.requestTime = calculatedTime;
         requestTime.value = calculatedTime;
-        requestTimeHint.textContent = `Preenchida automaticamente pela previsão: ${fmtDate(calc.endDT)} às ${calculatedTime}.`;
+        requestTimeHint.textContent = `Automático: ${fmtDate(calc.endDT)} às ${calculatedTime}.`;
       } else {
         machine.requestTime = "";
         requestTime.value = "";
-        requestTimeHint.textContent = "Será preenchida automaticamente após o cálculo.";
+        requestTimeHint.textContent = "Automático pela previsão.";
       }
     }
 
@@ -1524,7 +1577,6 @@
     function openSettings() {
       el.barLength.value = state.settings.barLength;
       el.kerfWidth.value = state.settings.kerfWidth;
-      el.requestLimit.value = state.settings.requestLimit;
       el.turnMinutes.value = state.settings.turnMinutes;
       el.modal.showModal();
     }
@@ -1532,7 +1584,6 @@
     function saveSettings() {
       state.settings.barLength = Math.max(1, parseNumber(el.barLength.value) || DEFAULT_SETTINGS.barLength);
       state.settings.kerfWidth = Math.max(0, parseNumber(el.kerfWidth.value) || 0);
-      state.settings.requestLimit = Math.max(1, parseInteger(el.requestLimit.value) || DEFAULT_SETTINGS.requestLimit);
       state.settings.turnMinutes = Math.max(1, parseInteger(el.turnMinutes.value) || DEFAULT_SETTINGS.turnMinutes);
       el.modal.close();
       render();
