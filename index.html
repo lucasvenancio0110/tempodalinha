@@ -1,1111 +1,1235 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>EXPERTLINK</title>
-<link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tempo da Linha</title>
+  <style>
+    :root {
+      --bg: #101419;
+      --panel: #171d24;
+      --panel-2: #202832;
+      --card: #ffffff;
+      --ink: #17202a;
+      --muted: #6c7785;
+      --line: #dfe5ec;
+      --primary: #14b8a6;
+      --primary-2: #0f766e;
+      --blue: #2563eb;
+      --ok: #15803d;
+      --ok-bg: #e9f9ef;
+      --warn: #b45309;
+      --warn-bg: #fff5df;
+      --bad: #b91c1c;
+      --bad-bg: #fff0f0;
+      --soft: #f6f8fb;
+      --radius: 8px;
+      --shadow: 0 14px 40px rgba(7, 12, 20, .16);
+    }
 
-<!-- PWA CONFIG -->
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#7B22A6">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="EXPERTLINK">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
-<link rel="apple-touch-startup-image" href="/icons/icon-512.png">
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      color: #f8fafc;
+      background:
+        linear-gradient(180deg, rgba(20, 184, 166, .08), transparent 280px),
+        var(--bg);
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      letter-spacing: 0;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
 
-<style>
-:root{
-  --bg1:#150A19; --bg2:#24102B;
-  --primary:#7B22A6; --primary2:#A95BD4;
-  --text:#fff; --ink:#1a1023; --muted:#CFC6D9;
-  --card:#ffffff; --line:#EEE7F3;
-  --ok:#10b981; --warn:#f59e0b; --bad:#ef4444;
-  --ok-bg:#e7fcf4; --warn-bg:#fff4e5; --bad-bg:#ffe9ec;
-  --radius:16px; --pad:16px;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0; color:var(--text);
-  font-family:'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing:antialiased;
-  background:
-    radial-gradient(900px 700px at 85% 90%, rgba(169,91,212,.14), transparent 60%),
-    radial-gradient(800px 600px at 10% 10%, rgba(123,34,166,.10), transparent 55%),
-    linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
-  background-attachment:fixed;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 12px);
-}
-/* Header */
-.header{
-  position:sticky; top:0; z-index:60;
-  display:grid; grid-template-columns:56px 1fr 56px; align-items:center;
-  height:64px; padding:0 var(--pad);
-  backdrop-filter:saturate(140%) blur(8px);
-  background:rgba(21,10,25,.85); border-bottom:1px solid rgba(255,255,255,.08);
-}
-.brand{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;
-  font-weight:800; background:linear-gradient(180deg,var(--primary),var(--primary2)); color:#140a19;}
-.title{font-weight:700;font-size:20px;letter-spacing:-.2px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.iconBtn{width:40px;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .appHeader {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(16, 20, 25, .94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .headerInner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+    .brandRow { display: flex; gap: 12px; align-items: center; min-width: 0; }
+    .mark {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      background: #dffaf6;
+      color: #075e55;
+      font-weight: 900;
+    }
+    .brandTitle { min-width: 0; }
+    .brandTitle strong { display: block; font-size: 18px; line-height: 1.15; }
+    .brandTitle span { display: block; color: #aab7c7; font-size: 12px; margin-top: 2px; }
 
-/* Actions */
-.actions{
-  position:sticky;top:64px;z-index:50;display:grid;gap:8px;grid-template-columns:1fr 1fr 1fr;padding:8px var(--pad);
-  background:rgba(21,10,25,.85);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:saturate(140%) blur(8px);
-}
-.btn{height:46px;border:none;border-radius:14px;cursor:pointer;font-weight:800}
-.btn.primary{background:linear-gradient(180deg,var(--primary),var(--primary2));color:#140a19}
-.btn.ghost{background:rgba(255,255,255,.10);color:#fff;border:1px solid rgba(255,255,255,.22)}
-/* Botão geral WhatsApp */
-.btn-whatsapp-all {
-  background: #25D366;
-  color: #fff;
-  font-weight: 700;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 20px;
-  cursor: pointer;
-  transition: 0.25s;
-}
-.btn-whatsapp-all:hover {
-  background: #1EBE5D;
-}
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .btn {
+      min-height: 40px;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      padding: 0 12px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .btnPrimary { background: var(--primary); color: #06201d; }
+    .btnPrimary:hover { background: #2dd4bf; }
+    .btnGhost { background: rgba(255,255,255,.08); color: #f8fafc; border-color: rgba(255,255,255,.14); }
+    .btnGhost:hover { background: rgba(255,255,255,.13); }
+    .btnLight { background: #fff; color: var(--ink); border-color: var(--line); }
+    .btnDanger { background: var(--bad-bg); color: var(--bad); border-color: #ffd2d2; }
+    .iconBtn {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--ink);
+      display: inline-grid;
+      place-items: center;
+      font-size: 17px;
+    }
 
-/* Main */
-main{max-width:1080px;margin:0 auto;padding:14px var(--pad) 120px}
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 16px 16px 96px;
+    }
+    .basePanel {
+      display: grid;
+      grid-template-columns: 1fr 1fr minmax(180px, .8fr);
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: var(--radius);
+      background: var(--panel);
+      margin-bottom: 14px;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+      color: #b8c4d4;
+      margin-bottom: 6px;
+    }
+    .machineCard .field label,
+    dialog .field label {
+      color: #536170;
+    }
+    .input, select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 10px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .input:focus, select:focus {
+      outline: 3px solid rgba(20,184,166,.18);
+      border-color: var(--primary);
+    }
+    .metricBlock {
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 9px 10px;
+    }
+    .metricBlock .label { color: #b8c4d4; font-size: 12px; font-weight: 800; }
+    .metricBlock .value { margin-top: 3px; font-size: 18px; font-weight: 900; }
 
-/* Base panel */
-.panel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px;margin-bottom:12px}
-.baseGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-@media (max-width:760px){.baseGrid{grid-template-columns:1fr}}
-.stat{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px}
-.stat .lab{font-size:12px;color:#E8E0F2;font-weight:700}
-.stat .val{font-size:18px;font-weight:700}
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .machineCard {
+      color: var(--ink);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .cardHead {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fff, #fbfcfe);
+    }
+    .cardName {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .cardName strong { font-size: 17px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 900;
+      border: 1px solid #e5eaf0;
+      background: #f3f6fa;
+      color: #516070;
+    }
+    .badge.ok { background: var(--ok-bg); color: var(--ok); border-color: #c8efd5; }
+    .badge.warn { background: var(--warn-bg); color: var(--warn); border-color: #ffe3a9; }
+    .badge.bad { background: var(--bad-bg); color: var(--bad); border-color: #ffd2d2; }
+    .headActions { display: flex; gap: 6px; }
+    .cardBody { padding: 12px; }
+    .machineCard.collapsed .cardBody { display: none; }
 
-/* Inputs */
-.label{font-size:12px;color:#CFC6D9;font-weight:700;margin-bottom:6px}
-.input,.inputNum,select,textarea{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:700;color:var(--ink)}
-.input:focus,.inputNum:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 4px rgba(123,34,166,.14);border-color:#E2D3EE}
+    .grid2, .grid3 {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .inlineControls {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: end;
+    }
+    .section {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-top: 10px;
+    }
+    .sectionTitle {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 900;
+      color: #263241;
+      margin-bottom: 8px;
+    }
+    .sectionTitle .btn {
+      min-height: 32px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+    .section.collapsedSection .sectionContent {
+      display: none;
+    }
+    .segmented {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .segmented label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .segmented input { accent-color: var(--primary-2); }
+    .preview {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      margin-top: 8px;
+    }
 
-/* Cards */
-.list{display:flex;flex-direction:column;gap:14px}
-.card{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.cardHead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px}
-.rowTitle{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.tag{padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid #e9e3f1;background:#f3f1f8;color:#5e4a73}
-.tag.ok{background:var(--ok-bg);color:#0b6148;border-color:#c9f7e6}
-.tag.warn{background:var(--warn-bg);color:#7a4e00;border-color:#ffe7c6}
-.tag.bad{background:var(--bad-bg);color:#7f1d1d;border-color:#ffd1d9}
-.cardBody{padding:10px 14px 14px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media (max-width:860px){.row{grid-template-columns:1fr}}
-.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:8px}
-@media (max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
-.kpi{background:linear-gradient(180deg,#FFFFFF,#FAFAFF);border:1px solid #EEE7F3;border-radius:12px;padding:10px}
-.kpi .num{font-weight:600;font-size:18px;color:#22132E}
-.kpi .lab{font-size:12px;color:#8A7F92;font-weight:700}
+    .trayList { display: flex; flex-direction: column; gap: 8px; }
+    .trayRow {
+      display: grid;
+      grid-template-columns: 1fr 38px;
+      gap: 8px;
+    }
+    .trayFooter, .cardFooter {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .totalText { color: #435061; font-size: 13px; font-weight: 900; }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .kpi {
+      min-height: 78px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 9px;
+    }
+    .kpi strong {
+      display: block;
+      color: #111827;
+      font-size: 16px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    .kpi span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-top: 5px;
+    }
+    .notice {
+      margin-top: 10px;
+      border-radius: var(--radius);
+      border: 1px solid #e5eaf0;
+      padding: 10px;
+      font-weight: 800;
+      line-height: 1.5;
+      background: #f8fafc;
+    }
+    .notice.ok { background: var(--ok-bg); color: #075d2a; border-color: #c8efd5; }
+    .notice.warn { background: var(--warn-bg); color: #704000; border-color: #ffe3a9; }
+    .notice.bad { background: var(--bad-bg); color: #7a1010; border-color: #ffd2d2; }
+    .notice small { display: block; margin-top: 5px; color: inherit; opacity: .86; font-size: 12px; }
+    .requestBox { display: none; }
+    .requestBox.visible { display: block; }
 
-/* MP block */
-.mp{margin-top:8px;border:1px dashed rgba(123,34,166,.28);border-radius:12px;background:linear-gradient(180deg,#fff,#faf7ff);padding:12px}
-.pills{display:flex;gap:8px;flex-wrap:wrap}
-.pill{display:flex;gap:6px;align-items:center;padding:8px 12px;border:1px solid #eae3f2;border-radius:999px;background:#fff;font-weight:700;color:#2b143b}
-.inline{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-.preview{margin-top:6px;font-size:13px;color:#5d506d;font-weight:700}
+    .empty {
+      display: none;
+      color: #bac6d6;
+      border: 1px dashed rgba(255,255,255,.2);
+      border-radius: var(--radius);
+      padding: 24px 12px;
+      text-align: center;
+      font-weight: 800;
+    }
+    .empty.visible { display: block; }
 
-/* Gabaritos */
-.gabs{margin-top:10px;border:1px solid #EEE7F3;border-radius:12px;background:linear-gradient(180deg,#fff,#fcfbff);padding:12px}
-.gabHeader{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
-.gabList{display:flex;flex-direction:column;gap:8px;margin:8px 0}
-.gabRow{display:grid;grid-template-columns:1fr 36px;gap:6px;align-items:center}
-.gabDel{height:36px;border:none;border-radius:10px;background:#fff;border:1px solid #E7DEEF;cursor:pointer}
-.gabFooter{display:flex;gap:8px;align-items:center;justify-content:flex-start;flex-wrap:wrap}
-.gabTotal{font-size:12px;font-weight:800;color:#5d506d;margin-left:auto}
+    dialog {
+      width: min(560px, calc(100vw - 24px));
+      border: 0;
+      border-radius: var(--radius);
+      padding: 0;
+      box-shadow: 0 25px 80px rgba(0,0,0,.36);
+    }
+    dialog::backdrop { background: rgba(5, 10, 16, .62); }
+    .modalHead, .modalBody, .modalFoot { padding: 14px; }
+    .modalHead {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+    }
+    .modalHead strong { font-size: 18px; color: var(--ink); }
+    .modalBody { color: var(--ink); }
+    .modalFoot {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      border-top: 1px solid var(--line);
+      background: #f8fafc;
+    }
 
-/* Messages */
-.notice{margin-top:10px;border-left:6px solid transparent;border-radius:12px;padding:12px;font-weight:800}
-.notice.ok{background:linear-gradient(180deg,#ECFDF5,#D1FAE5);border-left-color:var(--ok);color:#065F46}
-.notice.warn{background:linear-gradient(180deg,#FFF7ED,#FFEED4);border-left-color:var(--warn);color:#7C4A00}
-.notice.bad{background:linear-gradient(180deg,#FEF2F2,#FFE6E8);border-left-color:var(--bad);color:#7F1D1D}
-
-/* Req OP */
-.reqWrap{display:none;margin-top:10px;border:1px solid #EEE7F3;border-radius:12px;background:#fff;padding:10px}
-.reqWrap h4{margin:0 0 6px 0;font-size:14px;color:#2b143b}
-.reqGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media (max-width:640px){.reqGrid{grid-template-columns:1fr}}
-.smallBtn{height:36px;padding:0 12px;border:none;border-radius:10px;font-weight:800;cursor:pointer}
-.smallBtn.primary{background:linear-gradient(180deg,var(--primary),var(--primary2));color:#160a1b}
-.smallBtn.ghost{background:#fff;border:1px solid #E7DEEF;color:#2B1440}
-
-/* Collapse behavior */
-.card.collapsed .cardBody > *:not(.notice){display:none}
-.card.collapsed .notice{display:block !important}
-.card.collapsed .mini {
-  display: flex !important;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 10px;
-  flex-wrap: nowrap;
-}
-
-
-.mini {
-  display: none;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 0;
-  flex-wrap: wrap;
-}
-
-.t-miniExtra {
-  font-size: 13px;
-  font-weight: 700;
-  color: #301a3d;
-  opacity: 0.9;
-  white-space: nowrap;
-  display: inline-block !important;
-  margin-left: 4px;
-}
-
-
-.mini .chip {
-  font-size: 11px;
-  font-weight: 800;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid #e9e3f1;
-  background: #f6f3fb;
-  color: #5e4a73;
-  white-space: nowrap;
-}
-
-.mini .chip.ok {
-  background: var(--ok-bg);
-  color: #0b6148;
-  border-color: #c9f7e6;
-}
-
-.mini .chip.warn {
-  background: var(--warn-bg);
-  color: #7a4e00;
-  border-color: #ffe7c6;
-}
-
-.mini .chip.bad {
-  background: var(--bad-bg);
-  color: #7f1d1d;
-  border-color: #ffd1d9;
-}
-
-.mini .t-miniExtra {
-  font-size: 12px;
-  font-weight: 700;
-  color: #49305e;
-  white-space: nowrap;
-  opacity: 0.9;
-}
-/* UPDATE 2025-10-20 — Corrige zoom no iPhone */
-input, select, textarea {
-  font-size: 16px !important;
-}
-
-
-</style>
+    @media (max-width: 900px) {
+      .headerInner, .basePanel, .grid2, .grid3 { grid-template-columns: 1fr; }
+      .toolbar { justify-content: stretch; }
+      .toolbar .btn { flex: 1; }
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
+      .cardHead { grid-template-columns: 1fr; }
+      .headActions { justify-content: flex-end; }
+      .inlineControls { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr; }
+      .btn { width: 100%; }
+      .cardFooter .btn, .trayFooter .btn { width: auto; }
+    }
+  </style>
 </head>
 <body>
-<header class="header">
-  <div class="brand">🕰️</div>
-  <div class="title">EXPERTCNC 2.0 — Setup/Produção</div>
-  <button id="btnSettings" class="iconBtn" title="Ajustes" aria-label="Ajustes">⚙️</button>
-</header>
-
-<nav class="actions" aria-label="Ações">
-  <button id="addCardTop" class="btn primary">➕ Adicionar</button>
-  <button id="calcAll" class="btn ghost">🧮 Calcular todas</button>
-  <button id="openSettings" class="btn ghost">⚙️ Ajustes</button>
-</nav>
-
-<main>
-  <section class="panel" id="basePanel">
-    <div class="baseGrid">
-      <div>
-        <div class="label">Data base</div>
-        <input id="baseDate" class="input" type="date">
+  <header class="appHeader">
+    <div class="headerInner">
+      <div class="brandRow">
+        <div class="mark">EC</div>
+        <div class="brandTitle">
+          <strong>TEMPO DA LINHA</strong>
+          <span></span>
+        </div>
       </div>
-      <div>
-        <div class="label">Hora base</div>
-        <input id="baseTime" class="input" type="time" step="60">
-      </div>
-      <div class="stat">
-        <div class="lab">Turno na base</div>
-        <div id="baseShift" class="val">—</div>
+      <div class="toolbar">
+        <button class="btn btnPrimary" id="addMachineBtn" type="button">+ Maquina</button>
+        <button class="btn btnGhost" id="calcAllBtn" type="button">Calcular</button>
+        <button class="btn btnGhost" id="settingsBtn" type="button">Ajustes</button>
       </div>
     </div>
-  </section>
+  </header>
 
-  <section id="list" class="list"></section>
-
-  <div style="display:flex;justify-content:center;margin:14px 0 120px">
-    <button id="addCardBottom" class="btn primary">➕ Adicionar Máquina</button>
-  </div>
-  <!-- UPDATE 2025-10-20 — Botão geral WhatsApp -->
-<div style="display:flex;justify-content:center;margin-top:-80px;margin-bottom:40px">
-  <button class="btn-whatsapp-all" onclick="enviarResumoWhatsApp()">📤 Enviar resumo geral via WhatsApp</button>
-</div>
-
-</main>
-
-<script>
-/* ========= Helpers ========= */
-const $  = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
-const pad2 = n => String(n).padStart(2,'0');
-const fmtDate = d => `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`;
-const fmtTime = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-
-/* Tempo: "2,35" → 2m35s → 2.58 min; "1,30" → 1m30s → 1.5 min */
-function parseTempoToMinutes(input){
-  if (input == null) return NaN;
-  let s = String(input).trim().toLowerCase();
-  if (!s) return NaN;
-  s = s.replace(/\s+/g, '');
-
-  // 1) vírgula usada como separador de segundos (ex: "2,35" → 2m35s)
-  if (s.includes(',')) {
-    const [minStr, secStr] = s.split(',');
-    const m = parseInt(minStr, 10) || 0;
-    const sec = parseInt(secStr.padEnd(2, '0').slice(0, 2), 10) || 0;
-    return m + sec / 60;
-  }
-
-  // 2) formato com dois-pontos "2:35" → 2m35s
-  if (s.includes(':')) {
-    const [m, sec] = s.split(':').map(Number);
-    return (m || 0) + (sec || 0) / 60;
-  }
-
-  // 3) formato com segundos puros "90s"
-  if (/^\d+(\.\d+)?s$/.test(s)) {
-    const sec = parseFloat(s.replace('s', ''));
-    return sec / 60;
-  }
-
-  // 4) formato "1m30s"
-  const mMatch = s.match(/(\d+)(?=m)/i), sMatch = s.match(/(\d+)(?=s)/i);
-  if (mMatch) {
-    const mm = parseInt(mMatch[1], 10), ss = sMatch ? parseInt(sMatch[1], 10) : 0;
-    return mm + ss / 60;
-  }
-
-  // 5) se for só número simples, assume já estar em minutos
-  const n = parseFloat(s.replace(',', '.'));
-  return isNaN(n) ? NaN : n;
-}
-/* ========= Turnos ========= */
-function getShiftWindowFor(date){
-  const base=new Date(date.getFullYear(),date.getMonth(),date.getDate(),0,0,0,0);
-  const mk=(h,m,plus=0)=>{const d=new Date(base); d.setDate(d.getDate()+plus); d.setHours(h,m,0,0); return d;};
-  const minutes=date.getHours()*60+date.getMinutes();
-  const M0630=6*60+30, M1440=14*60+40, M2240=22*60+40;
-  if (minutes < M0630)      return { id:3, startDT: mk(22,40,-1), endDT: mk(6,30,0) };
-  else if (minutes < M1440) return { id:1, startDT: mk(6,30,0),  endDT: mk(14,40,0) };
-  else if (minutes < M2240) return { id:2, startDT: mk(14,40,0), endDT: mk(22,40,0) };
-  else                      return { id:3, startDT: mk(22,40,0), endDT: mk(6,30,1) };
-}
-function nextShiftWindow(prevEnd, prevId){
-  const nextId=prevId===3?1:prevId+1;
-  const map={1:[6,30,14,40],2:[14,40,22,40],3:[22,40,6,30]};
-  const base=new Date(prevEnd.getFullYear(),prevEnd.getMonth(),prevEnd.getDate(),0,0,0,0);
-  const s=new Date(base); s.setHours(map[nextId][0],map[nextId][1],0,0);
-  let e=new Date(base);
-  if(nextId!==3){ e.setHours(map[nextId][2],map[nextId][3],0,0); if(e<=s) e.setDate(e.getDate()+1); }
-  else { e.setDate(e.getDate()+1); e.setHours(map[nextId][2],map[nextId][3],0,0); }
-  if(s<prevEnd) s.setTime(prevEnd.getTime());
-  return {id:nextId,startDT:s,endDT:e};
-}
-const shiftName = id => `${id}º turno`;
-
-/* ========= Base de cálculo ========= */
-function setBaseToNow(){
-  const now=new Date();
-  $('#baseDate').value = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
-  $('#baseTime').value = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
-}
-function getBaseDT(){
-  const d=$('#baseDate').value, t=$('#baseTime').value;
-  if(!d||!t) return new Date();
-  const [Y,M,D]=d.split('-').map(Number);
-  const [h,m]=t.split(':').map(Number);
-  return new Date(Y,M-1,D,h,m,0,0);
-}
-function updateBaseShift(){ $('#baseShift').textContent = shiftName(getShiftWindowFor(getBaseDT()).id); }
-
-/* ========= UI global ========= */
-const list = $('#list');
-let machineSeq=1;
-
-$('#addCardTop').addEventListener('click',()=>addCard(true));
-$('#addCardBottom').addEventListener('click',()=>addCard(true));
-$('#calcAll').addEventListener('click',()=> $$('#list .card').forEach(c=>compute(c)));
-$('#openSettings').addEventListener('click',()=>alert('Ajustes gerais: nesta versão de exemplo use as variáveis fixas de MP/bedame no código.'));
-
-/* ========= ADD CARD ========= */
-function addCard(scroll=false){
-  const radioName = `barState-${Date.now()}-${Math.floor(Math.random()*1e6)}`;
-  const id = machineSeq++;
-  const card = document.createElement('div');
-  card.className='card';
-  card.dataset.id=id;
-
-  card.innerHTML = `
-    <div class="cardHead">
-      <div class="rowTitle">
-        <div style="font-weight:800">Máquina <span class="t-machine">—</span></div>
-        <span class="tag idle t-badge">Aguardando dados</span>
-        <div class="mini">
-        <span class="chip t-miniStatus">—</span>
-         <span class="t-miniExtra" style="display:none">—</span>
-        </div>
-
+  <main>
+    <section class="basePanel" aria-label="Base de calculo">
+      <div class="field">
+        <label for="baseDate">Data</label>
+        <input class="input" id="baseDate" type="date">
       </div>
-      <div style="display:flex;gap:6px">
-        <button class="iconBtn toggle" title="Minimizar/Expandir">↕️</button>
-        <button class="iconBtn remove" title="Remover">🗑️</button>
+      <div class="field">
+        <label for="baseTime">Hora</label>
+        <input class="input" id="baseTime" type="time" step="60">
       </div>
-    </div>
-
-    <div class="cardBody">
-      <div class="row">
-        <div>
-          <div class="label">Máquina (no topo)</div>
-          <input class="f-machine input" placeholder="Ex.: 98" />
-        </div>
-        <div>
-          <div class="label">Tempo por peça (min,seg)</div>
-          <input class="f-time input" inputmode="decimal" placeholder="Ex.: 2,30 / 1:45 / 90s" />
-        </div>
+      <div class="metricBlock">
+        <div class="label">Turno</div>
+        <div class="value" id="baseShift">-</div>
       </div>
+    </section>
 
-      <div class="row" style="margin-top:8px">
-        <div>
-          <div class="label">Comprimento da peça (mm)</div>
-          <input class="f-length inputNum" type="number" min="1" placeholder="Ex.: 32">
-        </div>
-        <div>
-          <div class="label">Barras inteiras (no alimentador)</div>
-          <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px">
-            <input class="f-bars inputNum" type="number" min="0" value="0">
-            <button class="smallBtn ghost simMinusB" type="button">−1 barra</button>
-            <button class="smallBtn ghost simPlusB" type="button">+1 barra</button>
+    <div class="cards" id="cards"></div>
+    <div class="empty" id="emptyState">Nenhuma maquina cadastrada.</div>
+  </main>
+
+  <dialog id="settingsModal">
+    <form method="dialog" id="settingsForm">
+      <div class="modalHead">
+        <strong>Ajustes de calculo</strong>
+        <button class="iconBtn" value="cancel" type="submit" aria-label="Fechar">x</button>
+      </div>
+      <div class="modalBody">
+        <div class="grid2">
+          <div class="field">
+            <label for="barLength">Comprimento da barra (mm)</label>
+            <input class="input" id="barLength" type="number" min="1" step="0.01">
+          </div>
+          <div class="field">
+            <label for="kerfWidth">Largura do bedame (mm)</label>
+            <input class="input" id="kerfWidth" type="number" min="0" step="0.01">
           </div>
         </div>
-      </div>
-
-      <div class="mp">
-        <div class="label" style="color:#2b1839;font-weight:800">Barra atual</div>
-        <div class="pills">
-          <label class="pill"><input type="radio" name="${radioName}" value="cheia"> Cheia</label>
-          <label class="pill"><input type="radio" name="${radioName}" value="parcial"> Parcial (mm)</label>
-          <label class="pill"><input type="radio" name="${radioName}" value="pecas" checked> Peças</label>
-        </div>
-        <div class="inline">
-          <div class="blk-mm" style="display:none">
-            <div class="label">mm da barra atual</div>
-            <input class="f-mm-parcial inputNum" type="number" min="0" placeholder="Ex.: 1360">
+        <div class="grid2">
+          <div class="field">
+            <label for="requestLimit">Mostrar proxima OP ate (horas)</label>
+            <input class="input" id="requestLimit" type="number" min="1" step="1">
           </div>
-          <div class="blk-pcs" style="display:block">
-            <div class="label">peças da barra atual</div>
-            <input class="f-pecas-parcial inputNum" type="number" min="0" placeholder="Ex.: 40">
+          <div class="field">
+            <label for="turnMinutes">Meta por turno usa (minutos)</label>
+            <input class="input" id="turnMinutes" type="number" min="1" step="1">
           </div>
         </div>
-        <div class="preview t-mp">Produção possível com esta MP: —</div>
-      </div>
-
-      <!-- Gabaritos (bandejas) -->
-      <div class="gabs">
-        <div class="gabHeader">
-          <div class="label" style="color:#2b1839;font-weight:800">Gabaritos (bandejas) produzidos</div>
-        </div>
-        <div class="gabList"></div>
-        <div class="gabFooter">
-          <button class="smallBtn ghost addGab" type="button">➕ Adicionar gabarito</button>
-          <button class="smallBtn primary finishGabs" type="button">✅ Concluir gabaritos</button>
-          <div class="gabTotal">Total produzido: 0 peças</div>
+        <div class="notice">
+          O calculo da materia-prima usa: comprimento da peca + largura do bedame. Exemplo: peca 32 mm com bedame 1 mm ocupa 33 mm por peca.
         </div>
       </div>
+      <div class="modalFoot">
+        <button class="btn btnLight" value="cancel" type="submit">Cancelar</button>
+        <button class="btn btnPrimary" id="saveSettingsBtn" value="default" type="button">Salvar ajustes</button>
+      </div>
+    </form>
+  </dialog>
 
-      <div class="row" style="margin-top:8px">
-        <div>
-          <div class="label">Meta da OP (peças)</div>
-          <input class="f-meta inputNum" type="number" min="0" placeholder="Ex.: 1000">
+  <template id="cardTemplate">
+    <article class="machineCard">
+      <div class="cardHead">
+        <div class="cardName">
+          <strong>Maquina <span data-role="titleMachine">-</span></strong>
+          <span class="badge" data-role="statusBadge">Aguardando dados</span>
+          <span class="badge" data-role="miniInfo">-</span>
         </div>
-        <div>
-          <div class="label">Produzidas (peças) — gerado a partir dos gabaritos</div>
-          <input class="f-prod inputNum" type="number" min="0" value="0" readonly>
+        <div class="headActions">
+          <button class="iconBtn" data-action="toggle" type="button" title="Minimizar">↕</button>
+          <button class="iconBtn" data-action="remove" type="button" title="Remover">×</button>
         </div>
       </div>
-
-      <div class="kpis">
-        <div class="kpi"><div class="num r-turno">—</div><div class="lab">Produção/turno</div></div>
-        <div class="kpi"><div class="num r-tempo">—</div><div class="lab">Tempo por peça</div></div>
-        <div class="kpi"><div class="num r-restop">—</div><div class="lab">Restantes da OP</div></div>
-        <div class="kpi"><div class="num r-capmp">—</div><div class="lab">Capacidade com MP</div></div>
-        <div class="kpi"><div class="num r-fecha">—</div><div class="lab">Encerramento previsto</div></div>
-        <div class="kpi"><div class="num r-horasrest">—</div><div class="lab">Horas restantes (base)</div></div>
-      </div>
-
-      <div class="notice" style="display:none"></div>
-
-      <div class="reqWrap">
-        <h4>Próxima OP</h4>
-        <div class="pills" style="margin-bottom:8px">
-          <label class="pill"><input type="radio" name="preset-${id}" value="sim"> <strong>Preset já trouxe</strong></label>
-          <label class="pill"><input type="radio" name="preset-${id}" value="nao" checked> <strong>Não trouxe</strong></label>
+      <div class="cardBody">
+        <div class="grid2">
+          <div class="field">
+            <label>Maquina</label>
+            <input class="input" data-field="machine" placeholder="Ex.: 98">
+          </div>
+          <div class="field">
+            <label>Tempo por peca</label>
+            <input class="input" data-field="timeInput" inputmode="decimal" placeholder="Ex.: 2,30 / 1:45 / 90s">
+          </div>
         </div>
-
-        <div class="whenPreset" style="display:none">
-          <div class="label">Tipo</div>
-          <select class="presetTipo input">
-            <option value="sequencia">⚪ Sequência</option>
-            <option value="azul">🔵 Setup Azul</option>
-            <option value="verde">🟢 Setup Verde</option>
-            <option value="vermelho">🔴 Setup Vermelho</option>
-          </select>
-        </div>
-
-        <div class="whenReq" style="margin-top:8px">
-          <div class="reqGrid">
-            <div>
-              <div class="label">Hora para solicitar</div>
-              <input type="time" class="req-hora input">
+        <div class="section">
+          <div class="sectionTitle">Barra atual</div>
+          <div class="segmented" data-role="barMode"></div>
+          <div class="grid2" style="margin-top:10px">
+            <div class="field" data-role="partialMmWrap">
+              <label>mm restantes na barra atual</label>
+              <input class="input" data-field="partialMm" type="number" min="0" step="0.01" placeholder="Ex.: 1360">
             </div>
-            <div>
-              <div class="label">Código da OP/Item (até 20)</div>
-              <input class="req-codigo input" maxlength="20" placeholder="Ex.: 125.142-1" pattern="[A-Za-z0-9.-]{0,20}">
+            <div class="field" data-role="partialPiecesWrap">
+              <label>Pecas restantes na barra atual</label>
+              <input class="input" data-field="partialPieces" type="number" min="0" step="1" placeholder="Ex.: 40">
+            </div>
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label>Barras inteiras no alimentador</label>
+            <div class="inlineControls">
+              <input class="input" data-field="fullBars" type="number" min="0" step="1">
+              <button class="btn btnLight" data-action="minusBar" type="button">-1</button>
+              <button class="btn btnLight" data-action="plusBar" type="button">+1</button>
+            </div>
+          </div>
+          <div class="preview" data-role="mpPreview">Producao possivel com esta MP: -</div>
+        </div>
+
+        <div class="grid2" style="margin-top:10px">
+          <div class="field">
+            <label>Meta da ordem / OP (pecas)</label>
+            <input class="input" data-field="target" type="number" min="0" step="1" placeholder="Ex.: 1000">
+          </div>
+          <div class="field">
+            <label>Comprimento da peca (mm)</label>
+            <input class="input" data-field="pieceLength" type="number" min="1" step="0.01" placeholder="Ex.: 32">
+          </div>
+        </div>
+
+        <div class="section" data-role="traysSection">
+          <div class="sectionTitle">
+            <span>Gabaritos produzidos</span>
+            <button class="btn btnLight" data-action="toggleTrays" type="button">Abrir</button>
+          </div>
+          <div class="sectionContent">
+            <div class="totalText" data-role="trayTotal">Total: 0 pecas</div>
+            <div class="trayList" data-role="trayList" style="margin-top:8px"></div>
+            <div class="trayFooter">
+              <button class="btn btnLight" data-action="addTray" type="button">+ Gabarito</button>
+              <button class="btn btnPrimary" data-action="lockTrays" type="button">Concluir gabaritos</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:10px">
+          <div class="field">
+            <label>Produzidas pelos gabaritos</label>
+            <input class="input" data-role="producedOutput" readonly>
+          </div>
+        </div>
+
+        <div class="kpis" data-role="kpis"></div>
+        <div class="notice" data-role="notice">Preencha os dados para calcular.</div>
+
+        <div class="section requestBox" data-role="requestBox">
+          <div class="sectionTitle">Proxima OP / Preset</div>
+          <div class="segmented" data-role="presetMode"></div>
+          <div class="grid2" data-role="presetYesWrap" style="margin-top:10px">
+            <div class="field">
+              <label>Tipo de preset</label>
+              <select data-field="presetType">
+                <option value="sequencia">Sequencia</option>
+                <option value="azul">Setup Azul</option>
+                <option value="verde">Setup Verde</option>
+                <option value="vermelho">Setup Vermelho</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid2" data-role="presetNoWrap" style="margin-top:10px">
+            <div class="field">
+              <label>Hora para solicitar</label>
+              <input class="input" data-field="requestTime" type="time" step="60">
+            </div>
+            <div class="field">
+              <label>Codigo da OP / Item</label>
+              <input class="input" data-field="itemCode" maxlength="20" placeholder="Ex.: 125.142-1">
             </div>
           </div>
         </div>
       </div>
-    </div>
-  `;
+    </article>
+  </template>
 
-list.appendChild(card);
-minimizarOutrosCards(card);        // fecha todos os outros cards
-card.classList.remove('collapsed'); // garante que o novo venha expandido
-
-// UPDATE 2025-10-20 — Foco direto e prioritário no campo "Máquina"
-setTimeout(() => {
-  const inputMachine = card.querySelector('.f-machine');
-  if (inputMachine) {
-    inputMachine.focus({ preventScroll: true });
-    inputMachine.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-}, 120); // pequeno delay para garantir que o DOM finalize antes de focar
-
-
-// UPDATE 2025-10-20 — Foco direto em "Máquina" e sem zoom
-const inputMachine = card.querySelector('.f-machine');
-if (inputMachine) {
-  inputMachine.focus();
-  inputMachine.scrollIntoView({behavior:'smooth', block:'center'});
-}
-
-
-  // ===== events básicos =====
-  card.querySelector('.remove').addEventListener('click',()=>{ if(confirm('Remover esta máquina?')) card.remove(); });
-// UPDATE 2025-10-21 — Minimizar também esconde o bloco "Próxima OP"
-card.querySelector('.toggle').addEventListener('click', () => {
-  const isCollapsed = card.classList.contains('collapsed');
-  minimizarOutrosCards(card);
-  card.classList.toggle('collapsed', !isCollapsed);
-
-  // se colapsar, esconde o bloco da Próxima OP
-  const reqWrap = card.querySelector('.reqWrap');
-  if (!isCollapsed) {
-    reqWrap.style.display = 'none';
-  } else {
-    // reexibe automaticamente se ele for necessário (usa a regra já existente)
-    const restToEndMin = card._calc?.restMin || 9999;
-    if (restToEndMin <= 16 * 60) reqWrap.style.display = 'block';
-  }
-});
-
-
-
-  const fMac=card.querySelector('.f-machine'), tMac=card.querySelector('.t-machine');
-  const syncTitle=()=>{ tMac.textContent=(fMac.value||'').trim()||'—'; };
-  ['input','change','blur'].forEach(ev=>fMac.addEventListener(ev,syncTitle));
-
-  // Enter behavior: não “pula” sozinho entre campos; no gabarito adiciona nova linha
-  card.addEventListener('keydown', (e)=>{
-    if(e.key==='Enter'){
-      const isGab = e.target && e.target.classList.contains('gabInput');
-      e.preventDefault();
-      if(isGab){ addGabRow(card,''); }
-      else { e.target.blur(); }
-    }
-  });
-
-  // Radios MP
-  const blkMM=card.querySelector('.blk-mm'), blkPCS=card.querySelector('.blk-pcs');
-  card.querySelectorAll(`.pills input[type="radio"][name="${radioName}"]`).forEach(r=>{
-    r.addEventListener('change',()=>{
-      blkMM.style.display = r.value==='parcial' && r.checked ? 'block':'none';
-      blkPCS.style.display = r.value==='pecas'   && r.checked ? 'block':'none';
-      if(r.value!=='parcial') card.querySelector('.f-mm-parcial').value='';
-      if(r.value!=='pecas')   card.querySelector('.f-pecas-parcial').value='';
-      updateMpPreview(card); compute(card);
+  <script>
+    const STORAGE_KEY = "expertcnc-reformulado-v1";
+    const DEFAULT_SETTINGS = {
+      barLength: 3600,
+      kerfWidth: 2,
+      requestLimit: 16,
+      turnMinutes: 480
+    };
+    const DEFAULT_MACHINE = () => ({
+      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+      machine: "",
+      timeInput: "",
+      pieceLength: "",
+      fullBars: 0,
+      barMode: "pieces",
+      partialMm: "",
+      partialPieces: "",
+      trays: [""],
+      traysLocked: false,
+      traysCollapsed: true,
+      target: "",
+      presetMode: "no",
+      presetType: "sequencia",
+      requestTime: "",
+      itemCode: "",
+      collapsed: false
     });
-  });
 
-  // Simuladores barras
-  card.querySelector('.simMinusB').addEventListener('click',()=>{ const el=card.querySelector('.f-bars'); el.value=Math.max(0,(parseInt(el.value)||0)-1); updateMpPreview(card); compute(card); });
-  card.querySelector('.simPlusB').addEventListener('click',()=>{ const el=card.querySelector('.f-bars'); el.value=(parseInt(el.value)||0)+1; updateMpPreview(card); compute(card); });
+    const state = loadState();
+    const el = {
+      cards: document.querySelector("#cards"),
+      empty: document.querySelector("#emptyState"),
+      baseDate: document.querySelector("#baseDate"),
+      baseTime: document.querySelector("#baseTime"),
+      baseShift: document.querySelector("#baseShift"),
+      modal: document.querySelector("#settingsModal"),
+      barLength: document.querySelector("#barLength"),
+      kerfWidth: document.querySelector("#kerfWidth"),
+      requestLimit: document.querySelector("#requestLimit"),
+      turnMinutes: document.querySelector("#turnMinutes")
+    };
 
-  // Preset/Req toggle
-  const whenPreset=card.querySelector('.whenPreset');
-  const whenReq=card.querySelector('.whenReq');
-  card.querySelectorAll(`input[name="preset-${id}"]`).forEach(r=>{
-    r.addEventListener('change',()=>{
-      const sim=r.value==='sim' && r.checked;
-      whenPreset.style.display=sim?'block':'none';
-      whenReq.style.display=sim?'none':'block';
-      compute(card);
+    function loadState() {
+      const now = new Date();
+      const base = {
+        date: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`,
+        time: `${pad2(now.getHours())}:${pad2(now.getMinutes())}`
+      };
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (saved && saved.settings && Array.isArray(saved.machines)) {
+          return {
+            settings: { ...DEFAULT_SETTINGS, ...saved.settings },
+            base: { ...base, ...(saved.base || {}) },
+            machines: saved.machines.length ? saved.machines.map(normalizeMachine) : [DEFAULT_MACHINE()]
+          };
+        }
+      } catch (_) {}
+      return { settings: { ...DEFAULT_SETTINGS }, base, machines: [DEFAULT_MACHINE()] };
+    }
+
+    function normalizeMachine(machine) {
+      return {
+        ...DEFAULT_MACHINE(),
+        ...machine,
+        trays: Array.isArray(machine.trays) && machine.trays.length ? machine.trays : [""],
+        traysCollapsed: machine.traysCollapsed !== false
+      };
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function pad2(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function fmtDate(d) {
+      if (!d) return "-";
+      return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+    }
+
+    function fmtTime(d) {
+      if (!d) return "-";
+      return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+
+    function plural(n, one, many) {
+      return Number(n) === 1 ? one : many;
+    }
+
+    function parseNumber(value) {
+      if (value === "" || value == null) return NaN;
+      return Number(String(value).replace(",", "."));
+    }
+
+    function parseInteger(value) {
+      const n = parseInt(value, 10);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function parseTempoToMinutes(input) {
+      if (input == null) return NaN;
+      let s = String(input).trim().toLowerCase().replace(/\s+/g, "");
+      if (!s) return NaN;
+      if (s.includes(",")) {
+        const parts = s.split(",");
+        const m = parseInt(parts[0], 10) || 0;
+        const sec = parseInt((parts[1] || "0").padEnd(2, "0").slice(0, 2), 10) || 0;
+        return m + sec / 60;
+      }
+      if (s.includes(":")) {
+        const parts = s.split(":");
+        return (parseInt(parts[0], 10) || 0) + (parseInt(parts[1], 10) || 0) / 60;
+      }
+      if (/^\d+(\.\d+)?s$/.test(s)) return parseFloat(s.replace("s", "")) / 60;
+      const mMatch = s.match(/(\d+)(?=m)/i);
+      const sMatch = s.match(/(\d+)(?=s)/i);
+      if (mMatch) return parseInt(mMatch[1], 10) + (sMatch ? parseInt(sMatch[1], 10) : 0) / 60;
+      const n = parseFloat(s.replace(",", "."));
+      return Number.isFinite(n) ? n : NaN;
+    }
+
+    function getBaseDateTime() {
+      const [y, m, d] = state.base.date.split("-").map(Number);
+      const [hh, mm] = state.base.time.split(":").map(Number);
+      if (!y || !m || !d || !Number.isFinite(hh) || !Number.isFinite(mm)) return new Date();
+      return new Date(y, m - 1, d, hh, mm, 0, 0);
+    }
+
+    function getShiftWindowFor(date) {
+      const base = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+      const mk = (h, m, plus = 0) => {
+        const d = new Date(base);
+        d.setDate(d.getDate() + plus);
+        d.setHours(h, m, 0, 0);
+        return d;
+      };
+      const minutes = date.getHours() * 60 + date.getMinutes();
+      const m0630 = 6 * 60 + 30;
+      const m1440 = 14 * 60 + 40;
+      const m2240 = 22 * 60 + 40;
+      if (minutes < m0630) return { id: 3, startDT: mk(22, 40, -1), endDT: mk(6, 30, 0) };
+      if (minutes < m1440) return { id: 1, startDT: mk(6, 30, 0), endDT: mk(14, 40, 0) };
+      if (minutes < m2240) return { id: 2, startDT: mk(14, 40, 0), endDT: mk(22, 40, 0) };
+      return { id: 3, startDT: mk(22, 40, 0), endDT: mk(6, 30, 1) };
+    }
+
+    function nextShiftWindow(prevEnd, prevId) {
+      const nextId = prevId === 3 ? 1 : prevId + 1;
+      const map = { 1: [6, 30, 14, 40], 2: [14, 40, 22, 40], 3: [22, 40, 6, 30] };
+      const base = new Date(prevEnd.getFullYear(), prevEnd.getMonth(), prevEnd.getDate(), 0, 0, 0, 0);
+      const s = new Date(base);
+      s.setHours(map[nextId][0], map[nextId][1], 0, 0);
+      const e = new Date(base);
+      if (nextId === 3) {
+        e.setDate(e.getDate() + 1);
+        e.setHours(map[nextId][2], map[nextId][3], 0, 0);
+      } else {
+        e.setHours(map[nextId][2], map[nextId][3], 0, 0);
+        if (e <= s) e.setDate(e.getDate() + 1);
+      }
+      if (s < prevEnd) s.setTime(prevEnd.getTime());
+      return { id: nextId, startDT: s, endDT: e };
+    }
+
+    function shiftName(id) {
+      return `${id}o turno`;
+    }
+
+    function formatMinutes(totalMin) {
+      if (totalMin == null || !Number.isFinite(totalMin)) return "-";
+      const min = Math.max(0, Math.floor(totalMin));
+      return `${Math.floor(min / 60)}h ${pad2(min % 60)}min`;
+    }
+
+    function formatCycle(minutes) {
+      if (!Number.isFinite(minutes)) return "-";
+      const m = Math.floor(minutes);
+      const s = Math.round((minutes - m) * 60);
+      return `${m}m ${pad2(s)}s - ${minutes.toFixed(2).replace(".", ",")} min`;
+    }
+
+    function calcMachine(machine) {
+      const baseDT = getBaseDateTime();
+      const tempoMin = parseTempoToMinutes(machine.timeInput);
+      const pieceLength = parseNumber(machine.pieceLength);
+      const target = parseInteger(machine.target);
+      const produced = machine.trays.reduce((sum, value) => sum + parseInteger(value), 0);
+      const remainingOP = Math.max(0, target - produced);
+      const barLength = Math.max(0, parseNumber(state.settings.barLength) || 0);
+      const kerfWidth = Math.max(0, parseNumber(state.settings.kerfWidth) || 0);
+      const step = pieceLength + kerfWidth;
+
+      const valid = Number.isFinite(tempoMin) && tempoMin > 0 && Number.isFinite(pieceLength) && pieceLength > 0 && target >= 0;
+      const perBar = valid && step > 0 ? Math.floor(barLength / step) : 0;
+      let currentBar = 0;
+      if (valid) {
+        if (machine.barMode === "full") currentBar = perBar;
+        if (machine.barMode === "partialMm") currentBar = Math.floor(Math.max(0, parseNumber(machine.partialMm) || 0) / step);
+        if (machine.barMode === "pieces") currentBar = Math.max(0, parseInteger(machine.partialPieces));
+      }
+      const fullBars = Math.max(0, parseInteger(machine.fullBars));
+      const capacity = Math.max(0, fullBars * perBar + currentBar);
+      const producible = Math.min(remainingOP, capacity);
+      const metaTurno = Number.isFinite(tempoMin) && tempoMin > 0 ? Math.floor((parseInteger(state.settings.turnMinutes) || 480) / tempoMin) : 0;
+
+      if (!valid) {
+        return {
+          valid: false,
+          produced,
+          perBar,
+          capacity,
+          remainingOP,
+          status: "idle",
+          statusText: "Aguardando dados",
+          badgeClass: "",
+          noticeClass: "",
+          noticeTitle: "Preencha tempo, comprimento da peca e meta da OP.",
+          kpis: baseKpis()
+        };
+      }
+
+      if (remainingOP === 0) {
+        return {
+          valid: true,
+          produced,
+          perBar,
+          capacity,
+          remainingOP,
+          metaTurno,
+          status: "done",
+          statusText: "OP finalizada",
+          badgeClass: "ok",
+          noticeClass: "ok",
+          noticeTitle: "OP ja atingiu a meta.",
+          reason: "meta",
+          endDT: baseDT,
+          restMin: 0,
+          showRequest: false,
+          kpis: buildKpis(metaTurno, tempoMin, remainingOP, capacity, baseDT, 0)
+        };
+      }
+
+      if (capacity <= 0) {
+        return {
+          valid: true,
+          produced,
+          perBar,
+          capacity,
+          remainingOP,
+          metaTurno,
+          status: "now",
+          statusText: "Sem MP",
+          badgeClass: "bad",
+          noticeClass: "bad",
+          noticeTitle: "Sem materia-prima disponivel para continuar.",
+          reason: "mp",
+          endDT: baseDT,
+          restMin: 0,
+          showRequest: true,
+          kpis: buildKpis(metaTurno, tempoMin, remainingOP, capacity, baseDT, 0)
+        };
+      }
+
+      let remainingMin = producible * tempoMin;
+      let endDT = new Date(baseDT);
+      let win = getShiftWindowFor(baseDT);
+      while (remainingMin > 0) {
+        const start = endDT > win.startDT ? endDT : win.startDT;
+        const available = Math.max(0, (win.endDT - start) / 60000);
+        const use = Math.min(remainingMin, available);
+        endDT = new Date(start.getTime() + use * 60000);
+        remainingMin -= use;
+        if (remainingMin <= 0) break;
+        win = nextShiftWindow(win.endDT, win.id);
+      }
+
+      const restMin = Math.max(0, Math.floor((endDT - baseDT) / 60000));
+      const restHours = restMin / 60;
+      const reason = producible < remainingOP ? "mp" : "meta";
+      let status = "ok";
+      let statusText = "OK";
+      let badgeClass = "ok";
+      let noticeClass = "ok";
+      let noticeTitle = "Nao encerra dentro da janela critica.";
+      if (restHours <= 8) {
+        status = "now";
+        statusText = "Neste turno";
+        badgeClass = "bad";
+        noticeClass = "bad";
+        noticeTitle = "Vai encerrar neste turno.";
+      } else if (restHours <= 16) {
+        status = "next";
+        statusText = "Proximo turno";
+        badgeClass = "warn";
+        noticeClass = "warn";
+        noticeTitle = "Vai encerrar no proximo turno.";
+      }
+
+      return {
+        valid: true,
+        produced,
+        perBar,
+        capacity,
+        remainingOP,
+        producible,
+        metaTurno,
+        status,
+        statusText,
+        badgeClass,
+        noticeClass,
+        noticeTitle,
+        reason,
+        endDT,
+        restMin,
+        showRequest: restMin <= (parseInteger(state.settings.requestLimit) || 16) * 60,
+        kpis: buildKpis(metaTurno, tempoMin, remainingOP, capacity, endDT, restMin)
+      };
+    }
+
+    function baseKpis() {
+      return [
+        ["-", "Producao/turno"],
+        ["-", "Tempo por peca"],
+        ["-", "Restantes da OP"],
+        ["-", "Capacidade com MP"],
+        ["-", "Encerramento previsto"],
+        ["-", "Horas restantes"]
+      ];
+    }
+
+    function buildKpis(metaTurno, tempoMin, remainingOP, capacity, endDT, restMin) {
+      return [
+        [`${metaTurno || 0} pecas`, "Producao/turno"],
+        [formatCycle(tempoMin), "Tempo por peca"],
+        [`${remainingOP} pecas`, "Restantes da OP"],
+        [`${capacity} pecas`, "Capacidade com MP"],
+        [endDT ? `${fmtDate(endDT)} ${fmtTime(endDT)} ${shiftName(getShiftWindowFor(endDT).id)}` : "-", "Encerramento previsto"],
+        [formatMinutes(restMin), "Horas restantes"]
+      ];
+    }
+
+    function render() {
+      el.baseDate.value = state.base.date;
+      el.baseTime.value = state.base.time;
+      el.baseShift.textContent = shiftName(getShiftWindowFor(getBaseDateTime()).id);
+      el.cards.innerHTML = "";
+      el.empty.classList.toggle("visible", state.machines.length === 0);
+      state.machines.forEach(machine => el.cards.appendChild(renderCard(machine)));
+      saveState();
+    }
+
+    function renderCard(machine) {
+      const template = document.querySelector("#cardTemplate");
+      const node = template.content.firstElementChild.cloneNode(true);
+      node.dataset.id = machine.id;
+      node.classList.toggle("collapsed", !!machine.collapsed);
+      const calc = calcMachine(machine);
+
+      node.querySelector('[data-role="titleMachine"]').textContent = machine.machine || "-";
+      const badge = node.querySelector('[data-role="statusBadge"]');
+      badge.textContent = calc.statusText;
+      badge.className = `badge ${calc.badgeClass || ""}`.trim();
+      const mini = node.querySelector('[data-role="miniInfo"]');
+      mini.textContent = calc.valid && calc.endDT ? `${formatMinutes(calc.restMin)} / ${fmtTime(calc.endDT)}` : "-";
+      mini.className = `badge ${calc.badgeClass || ""}`.trim();
+
+      bindField(node, machine, "machine");
+      bindField(node, machine, "timeInput");
+      bindField(node, machine, "pieceLength");
+      bindField(node, machine, "fullBars");
+      bindField(node, machine, "partialMm");
+      bindField(node, machine, "partialPieces");
+      bindField(node, machine, "target");
+      bindField(node, machine, "presetType");
+      bindField(node, machine, "requestTime");
+      bindField(node, machine, "itemCode");
+
+      renderRadios(node.querySelector('[data-role="barMode"]'), machine, "barMode", [
+        ["full", "Cheia"],
+        ["partialMm", "Parcial (mm)"],
+        ["pieces", "Pecas"]
+      ]);
+      node.querySelector('[data-role="partialMmWrap"]').style.display = machine.barMode === "partialMm" ? "block" : "none";
+      node.querySelector('[data-role="partialPiecesWrap"]').style.display = machine.barMode === "pieces" ? "block" : "none";
+      node.querySelector('[data-role="mpPreview"]').textContent =
+        `Producao possivel com esta MP: ${calc.capacity} ${plural(calc.capacity, "peca", "pecas")} | ${calc.perBar} por barra`;
+
+      renderTrays(node, machine, calc);
+      node.querySelector('[data-role="producedOutput"]').value = `${calc.produced} pecas`;
+      renderKpis(node, calc.kpis);
+      renderNotice(node, machine, calc);
+      renderRequest(node, machine, calc);
+      bindActions(node, machine);
+      return node;
+    }
+
+    function bindField(root, machine, field) {
+      const input = root.querySelector(`[data-field="${field}"]`);
+      if (!input) return;
+      input.value = machine[field] ?? "";
+      input.addEventListener("input", () => {
+        machine[field] = input.value;
+        saveState();
+      });
+      input.addEventListener("change", () => {
+        machine[field] = input.value;
+        render();
+      });
+    }
+
+    function renderRadios(root, machine, field, options) {
+      root.innerHTML = "";
+      options.forEach(([value, label]) => {
+        const item = document.createElement("label");
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = `${field}-${machine.id}`;
+        input.value = value;
+        input.checked = machine[field] === value;
+        input.addEventListener("change", () => {
+          machine[field] = value;
+          render();
+        });
+        item.append(input, document.createTextNode(label));
+        root.appendChild(item);
+      });
+    }
+
+    function renderTrays(root, machine, calc) {
+      const section = root.querySelector('[data-role="traysSection"]');
+      const list = root.querySelector('[data-role="trayList"]');
+      const total = root.querySelector('[data-role="trayTotal"]');
+      const lockBtn = root.querySelector('[data-action="lockTrays"]');
+      const toggleBtn = root.querySelector('[data-action="toggleTrays"]');
+      section.classList.toggle("collapsedSection", !!machine.traysCollapsed);
+      toggleBtn.textContent = machine.traysCollapsed ? "Abrir" : "Minimizar";
+      list.innerHTML = "";
+      total.textContent = `Total: ${calc.produced} ${plural(calc.produced, "peca", "pecas")}`;
+      lockBtn.textContent = machine.traysLocked ? "Editar gabaritos" : "Concluir gabaritos";
+      machine.trays.forEach((value, index) => {
+        const row = document.createElement("div");
+        row.className = "trayRow";
+        const input = document.createElement("input");
+        input.className = "input";
+        input.type = "number";
+        input.min = "0";
+        input.step = "1";
+        input.placeholder = "Qtd neste gabarito";
+        input.value = value;
+        input.readOnly = machine.traysLocked;
+        input.addEventListener("input", () => {
+          machine.trays[index] = input.value;
+          saveState();
+          total.textContent = `Total: ${machine.trays.reduce((sum, item) => sum + parseInteger(item), 0)} pecas`;
+        });
+        input.addEventListener("change", () => {
+          machine.trays[index] = input.value;
+          render();
+        });
+        const del = document.createElement("button");
+        del.className = "iconBtn";
+        del.type = "button";
+        del.textContent = "×";
+        del.disabled = machine.traysLocked;
+        del.addEventListener("click", () => {
+          machine.trays.splice(index, 1);
+          if (!machine.trays.length) machine.trays.push("");
+          render();
+        });
+        row.append(input, del);
+        list.appendChild(row);
+      });
+    }
+
+    function renderKpis(root, kpis) {
+      const wrap = root.querySelector('[data-role="kpis"]');
+      wrap.innerHTML = "";
+      kpis.forEach(([value, label]) => {
+        const kpi = document.createElement("div");
+        kpi.className = "kpi";
+        kpi.innerHTML = `<strong>${value}</strong><span>${label}</span>`;
+        wrap.appendChild(kpi);
+      });
+    }
+
+    function renderNotice(root, machine, calc) {
+      const notice = root.querySelector('[data-role="notice"]');
+      notice.className = `notice ${calc.noticeClass || ""}`.trim();
+      if (!calc.valid) {
+        notice.textContent = calc.noticeTitle;
+        return;
+      }
+      const reason = calc.reason === "mp" ? "falta de materia-prima" : "quantidade da OP atingida";
+      notice.innerHTML = `
+        <strong>${calc.noticeTitle}</strong>
+        <small>Tempo ate encerrar: ${formatMinutes(calc.restMin)}. Previsao: ${fmtDate(calc.endDT)} as ${fmtTime(calc.endDT)} (${shiftName(getShiftWindowFor(calc.endDT).id)}).</small>
+        <small>Motivo previsto: ${reason}. Produzidas: ${calc.produced}. Restantes da OP: ${calc.remainingOP}. Capacidade com MP: ${calc.capacity}.</small>
+      `;
+    }
+
+    function renderRequest(root, machine, calc) {
+      const box = root.querySelector('[data-role="requestBox"]');
+      box.classList.toggle("visible", !!calc.showRequest);
+      renderRadios(root.querySelector('[data-role="presetMode"]'), machine, "presetMode", [
+        ["yes", "Preset ja trouxe"],
+        ["no", "Nao trouxe"]
+      ]);
+      root.querySelector('[data-role="presetYesWrap"]').style.display = machine.presetMode === "yes" ? "grid" : "none";
+      root.querySelector('[data-role="presetNoWrap"]').style.display = machine.presetMode === "no" ? "grid" : "none";
+    }
+
+    function bindActions(root, machine) {
+      root.querySelector('[data-action="toggle"]').addEventListener("click", () => {
+        machine.collapsed = !machine.collapsed;
+        render();
+      });
+      root.querySelector('[data-action="remove"]').addEventListener("click", () => {
+        if (!confirm("Remover esta maquina?")) return;
+        state.machines = state.machines.filter(item => item.id !== machine.id);
+        render();
+      });
+      root.querySelector('[data-action="minusBar"]').addEventListener("click", () => {
+        machine.fullBars = Math.max(0, parseInteger(machine.fullBars) - 1);
+        render();
+      });
+      root.querySelector('[data-action="plusBar"]').addEventListener("click", () => {
+        machine.fullBars = parseInteger(machine.fullBars) + 1;
+        render();
+      });
+      root.querySelector('[data-action="toggleTrays"]').addEventListener("click", () => {
+        machine.traysCollapsed = !machine.traysCollapsed;
+        render();
+      });
+      root.querySelector('[data-action="addTray"]').addEventListener("click", () => {
+        if (machine.traysLocked) return;
+        machine.traysCollapsed = false;
+        machine.trays.push("");
+        render();
+      });
+      root.querySelector('[data-action="lockTrays"]').addEventListener("click", () => {
+        machine.traysLocked = !machine.traysLocked;
+        render();
+      });
+    }
+
+    function openSettings() {
+      el.barLength.value = state.settings.barLength;
+      el.kerfWidth.value = state.settings.kerfWidth;
+      el.requestLimit.value = state.settings.requestLimit;
+      el.turnMinutes.value = state.settings.turnMinutes;
+      el.modal.showModal();
+    }
+
+    function saveSettings() {
+      state.settings.barLength = Math.max(1, parseNumber(el.barLength.value) || DEFAULT_SETTINGS.barLength);
+      state.settings.kerfWidth = Math.max(0, parseNumber(el.kerfWidth.value) || 0);
+      state.settings.requestLimit = Math.max(1, parseInteger(el.requestLimit.value) || DEFAULT_SETTINGS.requestLimit);
+      state.settings.turnMinutes = Math.max(1, parseInteger(el.turnMinutes.value) || DEFAULT_SETTINGS.turnMinutes);
+      el.modal.close();
+      render();
+    }
+
+    function presetLabel(machine) {
+      const map = {
+        sequencia: "Sequencia",
+        azul: "Setup Azul",
+        verde: "Setup Verde",
+        vermelho: "Setup Vermelho"
+      };
+      return map[machine.presetType] || "Sequencia";
+    }
+
+    function buildWhatsAppReport() {
+      const baseDT = getBaseDateTime();
+      const lines = [];
+      lines.push("*RELATORIO EXPERTCNC - INICIO DO TURNO*");
+      lines.push(`Base: ${fmtDate(baseDT)} as ${fmtTime(baseDT)} - ${shiftName(getShiftWindowFor(baseDT).id)}`);
+      lines.push(`Barra: ${state.settings.barLength} mm | Bedame: ${state.settings.kerfWidth} mm`);
+      lines.push("");
+
+      const validMachines = state.machines
+        .map(machine => ({ machine, calc: calcMachine(machine) }))
+        .filter(item => item.calc.valid);
+
+      if (!validMachines.length) {
+        lines.push("Nenhuma maquina com dados completos para calcular.");
+      }
+
+      validMachines.forEach(({ machine, calc }, index) => {
+        const name = machine.machine || "-";
+        const status =
+          calc.status === "now" ? "ENCERRA NESTE TURNO" :
+          calc.status === "next" ? "ENCERRA NO PROXIMO TURNO" :
+          calc.status === "done" ? "OP FINALIZADA" :
+          "OK";
+        const reason = calc.reason === "mp" ? "Falta de materia-prima" : "Meta/quantidade da OP";
+        lines.push(`*TNL ${name}* - ${status}`);
+        lines.push(`Tempo ate encerrar: ${formatMinutes(calc.restMin)}`);
+        lines.push(`Previsao: ${fmtDate(calc.endDT)} as ${fmtTime(calc.endDT)} (${shiftName(getShiftWindowFor(calc.endDT).id)})`);
+        lines.push(`Motivo: ${reason}`);
+        lines.push(`Meta OP: ${parseInteger(machine.target)} pecas`);
+        lines.push(`Produzidas: ${calc.produced} pecas`);
+        lines.push(`Restantes: ${calc.remainingOP} pecas`);
+        lines.push(`Meta do turno: ${calc.metaTurno} pecas`);
+        lines.push(`Tempo da peca: ${formatCycle(parseTempoToMinutes(machine.timeInput))}`);
+        lines.push(`MP: ${calc.capacity} pecas disponiveis (${calc.perBar} por barra)`);
+
+        if (calc.showRequest && calc.status !== "ok" && calc.status !== "done") {
+          if (machine.presetMode === "yes") {
+            lines.push(`Preset: SIM - ${presetLabel(machine)} previsto para ${fmtTime(calc.endDT)}`);
+          } else {
+            lines.push(`Preset: NAO`);
+            lines.push(`Solicitar: ${machine.requestTime || fmtTime(calc.endDT)}`);
+            lines.push(`Item: ${machine.itemCode || "-"}`);
+          }
+        } else {
+          lines.push("Proxima OP: sem solicitacao critica no momento.");
+        }
+
+        if (index < validMachines.length - 1) lines.push("------------------------------");
+      });
+
+      lines.push("");
+      lines.push(`Gerado as ${fmtTime(new Date())} pelo EXPERTCNC.`);
+      return lines.join("\n");
+    }
+
+    function sendWhatsApp() {
+      render();
+      const text = buildWhatsAppReport();
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    }
+
+    document.querySelector("#addMachineBtn").addEventListener("click", () => {
+      state.machines.push(DEFAULT_MACHINE());
+      render();
     });
-  });
-// UPDATE 2025-10-21 — Armazena alterações do bloco de Requisição/Preset
-card.querySelectorAll('.presetTipo, .req-hora, .req-codigo').forEach(el=>{
-  el.addEventListener('input',()=>{ updateReqInfo(card); compute(card); });
-  el.addEventListener('change',()=>{ updateReqInfo(card); compute(card); });
-});
-
-  // Inputs que recalculam
-  card.querySelectorAll('.f-time,.f-length,.f-bars,.f-pecas-parcial,.f-mm-parcial,.f-meta').forEach(el=>{
-    el.addEventListener('input',()=>{ updateMpPreview(card); compute(card); });
-    el.addEventListener('change',()=>{ updateMpPreview(card); compute(card); });
-  });
-
-  // ===== GABARITOS =====
-  card._gabLocked=false;
-  card._gabList = card.querySelector('.gabList');
-  card._gabTotalEl = card.querySelector('.gabTotal');
-  card.querySelector('.addGab').addEventListener('click',()=>addGabRow(card,''));
-  card.querySelector('.finishGabs').addEventListener('click',()=>toggleFinishGabs(card));
-
-  // começa com uma linha
-  addGabRow(card,'');
-
-  // Primeiro compute
-  syncTitle(); updateMpPreview(card); compute(card);
-}
-
-/* Add uma linha de gabarito */
-function addGabRow(card, val){
-  if(card._gabLocked) return; // travado = sem adicionar
-  const row=document.createElement('div');
-  row.className='gabRow';
-  row.innerHTML=`
-    <input class="gabInput inputNum" type="number" min="0" placeholder="Qtd neste gabarito" value="${val||''}">
-    <button type="button" class="gabDel" title="Remover">🗑️</button>
-  `;
-  const inp=row.querySelector('.gabInput');
-  const del=row.querySelector('.gabDel');
-
-  inp.addEventListener('input',()=>updateGabTotal(card));
-  inp.addEventListener('change',()=>updateGabTotal(card));
-  del.addEventListener('click',()=>{ if(card._gabLocked) return; row.remove(); updateGabTotal(card); });
-
-  card._gabList.appendChild(row);
-  inp.focus();
-  updateGabTotal(card);
-}
-
-/* Soma gabaritos → mostra total; NÃO escreve em f-prod até “concluir” */
-function updateGabTotal(card){
-  const vals=Array.from(card._gabList.querySelectorAll('.gabInput')).map(i=>parseInt(i.value,10)||0);
-  const total=vals.reduce((a,b)=>a+b,0);
-  card._gabTotalEl.textContent=`Total produzido: ${total} peças`;
-  if(card._gabLocked){
-    // manter f-prod em sincronia se destravou e travou de novo
-    card.querySelector('.f-prod').value=total;
-    compute(card);
-  }
-}
-
-/* Finaliza/edita gabaritos */
-function toggleFinishGabs(card){
-  const btn=card.querySelector('.finishGabs');
-  card._gabLocked = !card._gabLocked;
-
-  const inputs=card._gabList.querySelectorAll('.gabInput'), deletes=card._gabList.querySelectorAll('.gabDel');
-  inputs.forEach(i=>i.readOnly=card._gabLocked);
-  deletes.forEach(b=>b.disabled=card._gabLocked);
-
-  // atualiza total e joga para f-prod quando conclui
-  const total = Array.from(inputs).map(i=>parseInt(i.value,10)||0).reduce((a,b)=>a+b,0);
-  if(card._gabLocked){
-    card.querySelector('.f-prod').value=total;
-    btn.textContent='✏️ Editar gabaritos';
-    compute(card);
-  }else{
-    btn.textContent='✅ Concluir gabaritos';
-  }
-  updateGabTotal(card);
-}
-
-/* MP Preview */
-function updateMpPreview(card){
-  // Ajustes fixos (se você já tem modal/LS, é só trocar por loadCfg)
-  const barLen=3600;   // mm
-  const bedame=2;      // mm
-  const comp=parseFloat(card.querySelector('.f-length').value);
-  const passo=isFinite(comp)?(comp+bedame):NaN;
-  const bars=parseInt(card.querySelector('.f-bars').value,10)||0;
-  const sel = card.querySelector('.mp .pills input:checked');
-  const mode = sel?sel.value:null;
-  const mmParcial=parseFloat(card.querySelector('.f-mm-parcial').value)||0;
-  const pcsParcial=parseInt(card.querySelector('.f-pecas-parcial').value,10)||0;
-
-  let porBarra=0, atual=0, total=0;
-  if(!isNaN(passo) && passo>0){
-    porBarra=Math.floor(barLen/passo);
-    if(mode==='cheia')       atual=porBarra;
-    else if(mode==='parcial')atual=Math.max(0, Math.floor(mmParcial/passo));
-    else if(mode==='pecas')  atual=Math.max(0, pcsParcial);
-    total=Math.max(0, bars*porBarra + (mode?atual:0));
-  }
-  card.querySelector('.t-mp').textContent=`Produção possível com esta MP: ${isNaN(total)?'—':total+' peças'}`;
-  card._mp={porBarra, atual, total, passo};
-}
-// =======================================================
-// UPDATE 2025-10-21 — Função para salvar requisição/preset no card
-// =======================================================
-function updateReqInfo(card) {
-  if (!card._req) card._req = {};
-
-  const radiosPreset = card.querySelectorAll(`.reqWrap input[type="radio"]`);
-  radiosPreset.forEach(r => {
-    if (r.checked) {
-      card._req.modo = r.value;
-      if (r.value === 'sim') {
-        card._req.tipo = card.querySelector('.presetTipo')?.value || null;
-        card._req.hora = null;
-        card._req.codigo = null;
-      } else if (r.value === 'nao') {
-        card._req.tipo = null;
-        card._req.hora = card.querySelector('.req-hora')?.value || null;
-        card._req.codigo = (card.querySelector('.req-codigo')?.value || '').trim() || null;
-      }
-    }
-  });
-}
-
-/* Compute */
-function compute(card){
-  const baseDT=getBaseDT();
-  $('#baseShift').textContent=shiftName(getShiftWindowFor(baseDT).id);
-
-  const maquina   = (card.querySelector('.f-machine').value||'').trim();
-  const tempoMin  = parseTempoToMinutes(card.querySelector('.f-time').value);
-  const compPeca  = parseFloat(card.querySelector('.f-length').value);
-  const meta      = parseInt(card.querySelector('.f-meta').value,10);
-  let   produzidas= parseInt(card.querySelector('.f-prod').value,10)||0;
-
-  const badge = card.querySelector('.t-badge');
-  const resMsg= card.querySelector('.notice');
-  const reqWrap = card.querySelector('.reqWrap');
-
-  // valida
-  if (isNaN(tempoMin)||tempoMin<=0 || isNaN(compPeca)||compPeca<=0 || isNaN(meta)||meta<0) {
-    badge.textContent='Aguardando dados'; badge.className='tag idle t-badge';
-    resMsg.style.display='block'; resMsg.className='notice'; resMsg.textContent='Preencha tempo, comprimento e meta.';
-    fillOutputs(card, maquina||'—','—','—','—','—','—'); card._calc=null; updateMini(card,null); return;
-  }
-  if(produzidas>meta) produzidas=meta;
-
-  // turno atual
-  const winNow=getShiftWindowFor(baseDT);
- // UPDATE 2025-10-21 — Corrige cálculo da produção/turno (fixa turno = 480 min)
-const turnoMinutos = 480;
-
-  const prodTurno=Math.floor(turnoMinutos/tempoMin);
-
-  const restantesOP=Math.max(0, meta - produzidas);
-  const mp=card._mp||{total:0, porBarra:0, atual:0};
-  const capacidade=mp.total||0;
-
-  const minRestTurno=Math.max(0, Math.floor((winNow.endDT - baseDT)/60000));
-  const byTempo=Math.floor(minRestTurno/tempoMin);
-  const turnoProducao=Math.max(0, Math.min(byTempo, restantesOP, capacidade));
-  const faltamAposTurno=Math.max(0, restantesOP - turnoProducao);
-
-  // previsão de encerramento usando apenas MP declarada
-  const produciveis=Math.min(restantesOP, capacidade);
-  let restanteMin=produciveis*tempoMin;
-  let endDT=new Date(baseDT);
-  let win=winNow;
-  while(restanteMin>0){
-    const start=endDT>win.startDT?endDT:win.startDT;
-    const winMin=Math.max(0,(win.endDT-start)/60000);
-    const usar=Math.min(restanteMin,winMin);
-    endDT=new Date(start.getTime()+usar*60000);
-    restanteMin-=usar;
-    if(restanteMin<=0) break;
-    win=nextShiftWindow(win.endDT,win.id);
-  }
-  const willEnd=produciveis>0?endDT:null;
-  const restToEndMin = willEnd? Math.max(0, Math.floor((willEnd - baseDT)/60000)) : null;
-
-  // status
-  const diffHoras = willEnd ? (willEnd - baseDT)/3600000 : null;
-  const fechaNesteTurno = !!(willEnd && diffHoras<=8);
-  const fechaProxTurno  = !!(willEnd && diffHoras>8 && diffHoras<=16);
-
-  const motivo = (capacidade===0) ? 'MP' : (produciveis < restantesOP ? 'MP' : 'Meta');
-
-  // req op: limiar fixo 16h aqui
-  const limiar=16;
-  const showReq= restToEndMin!=null && restToEndMin <= limiar*60;
-  reqWrap.style.display=showReq?'block':'none';
-
-  // msg
-  const tempoDisplay = (()=>{const s=Math.round((tempoMin%1)*60); const m=Math.floor(tempoMin); return `${m}m ${pad2(s)}s — ${tempoMin.toFixed(2).replace('.',',')} min`;})();
-  const restFmt = restToEndMin!=null ? `${Math.floor(restToEndMin/60)}h ${pad2(restToEndMin%60)}min` : '—';
-
-  let msgClass='ok', titulo='NÃO VAI ENCERRAR NESTE TURNO!'; let emoji='🟢';
-  if(fechaNesteTurno){ msgClass='bad'; titulo='VAI ENCERRAR NESTE TURNO!'; emoji='🔴'; }
-  else if(fechaProxTurno){ msgClass='warn'; titulo='VAI ENCERRAR NO PRÓXIMO TURNO!'; emoji='🟠'; }
-
-  resMsg.style.display='block';
-  resMsg.className=`notice ${msgClass}`;
-// UPDATE 2025-10-21 — Padroniza mensagem do card com o formato do WhatsApp
-// UPDATE 2025-10-21 — Padroniza visual do card com formato profissional (sem underlines)
-resMsg.innerHTML = `
-  <div class="statusTitle" style="font-size:15px; font-weight:800; margin-bottom:6px;">
-    ${emoji} ${titulo}
-  </div>
-  <div style="font-weight:600; line-height:1.65; color:#3a2a4a; font-size:14px;">
-    ⏱ <strong>Tempo até encerrar:</strong> ${restFmt}<br>
-    🕒 <strong>Vai encerrar:</strong> ${fmtDate(willEnd)} às ${fmtTime(willEnd)} — ${shiftName(getShiftWindowFor(willEnd).id)}<br>
-    🎯 <strong>Meta da OP:</strong> ${meta} peças<br>
-    📦 <strong>Produzidas:</strong> ${produzidas} peças<br>
-    🧮 <strong>Meta do turno:</strong> ${isFinite(tempoMin) && tempoMin > 0 ? Math.floor(480 / tempoMin) : '—'} peças<br>
-    ⚙️ <strong>Tempo da peça:</strong> ${Math.floor(tempoMin)}m${Math.round((tempoMin - Math.floor(tempoMin)) * 60)}s — ${tempoMin.toFixed(2).replace('.', ',')} min<br>
-    <br>
-    ${motivo === 'MP'
-      ? '<span style="color:#7a0000;">🔻 Vai encerrar por falta de matéria-prima.</span>'
-      : '<span style="color:#066e3b;">✅ Vai encerrar por quantidade atingida da OP.</span>'}
-    <br><br>
-    ${(() => {
-      const presetSim = card.querySelector('input[value="sim"]')?.checked;
-      const presetNao = card.querySelector('input[value="nao"]')?.checked;
-      const tipo = card.querySelector('.presetTipo')?.value || '';
-      const tipoNome =
-        tipo === 'sequencia' ? 'Sequência ⚪' :
-        tipo === 'azul' ? 'Setup Azul 🔵' :
-        tipo === 'verde' ? 'Setup Verde 🟢' :
-        tipo === 'vermelho' ? 'Setup Vermelho 🔴' : '';
-      const codigo = card.querySelector('.req-codigo')?.value || '—';
-      const horaReq = card.querySelector('.req-hora')?.value || fmtTime(willEnd);
-
-      if (presetSim) {
-        return `<span>✅ <strong>Preset já trouxe:</strong> ${tipoNome} — às ${fmtTime(willEnd)}</span>`;
-      } else if (presetNao) {
-        return `
-          <span>❌ <strong>Preset não trouxe.</strong></span><br>
-          🕓 <strong>Solicitar às:</strong> ${horaReq}<br>
-          📄 <strong>Item:</strong> ${codigo}
-        `;
-      } else {
-        return `<span>⚙️ <strong>Informação de preset não definida.</strong></span>`;
-      }
-    })()}
-  </div>
-`;
-
-
-
-  // outputs
-  const fecharFrase = willEnd ? `${fmtDate(willEnd)} — ${fmtTime(willEnd)} — ${shiftName(getShiftWindowFor(willEnd).id)}` : '—';
-  fillOutputs(card, maquina,
-              `${isFinite(prodTurno)?prodTurno:'—'} peças`,
-              tempoDisplay,
-              `${Math.max(0, meta - (parseInt(card.querySelector('.f-prod').value,10)||0))} peças`,
-              `${capacidade} peças`,
-              fecharFrase);
-  card.querySelector('.r-horasrest').textContent = willEnd ? restFmt : '—';
-
-  // badge topo
-  const badgeEl=card.querySelector('.t-badge');
-  if (fechaNesteTurno){ badgeEl.textContent=`Neste turno — Motivo: ${motivo==='MP'?'Falta de MP':'Meta'}`; badgeEl.className='tag bad t-badge'; }
-  else if (fechaProxTurno){ badgeEl.textContent='Próx. turno'; badgeEl.className='tag warn t-badge'; }
-  else { badgeEl.textContent='OK'; badgeEl.className='tag ok t-badge'; }
-
-// --- coleta informações do bloco “Próxima OP” ---
-const radiosPreset = card.querySelectorAll(`.reqWrap input[type="radio"]`);
-let presetModo = null, presetTipo = null, presetHora = null, presetCodigo = null;
-radiosPreset.forEach(r => {
-  if (r.checked) {
-    presetModo = r.value;
-    if (presetModo === 'sim') {
-      presetTipo = card.querySelector('.presetTipo')?.value || null;
-    } else if (presetModo === 'nao') {
-      presetHora = card.querySelector('.req-hora')?.value || null;
-      presetCodigo = (card.querySelector('.req-codigo')?.value || '').trim() || null;
-    }
-  }
-});
-
-// --- salva tudo no objeto interno do card ---
-card._calc = {
-  maquina,
-  endDT: willEnd,
-  restMin: restToEndMin,
-  fechaNesteTurno,
-  fechaProxTurno,
-  motivoTipo: (motivo === 'MP' ? 'mp' : 'meta'),
-  preset: {
-    modo: presetModo,
-    tipo: presetTipo,
-    hora: presetHora,
-    codigo: presetCodigo
-  }
-};
-
-// UPDATE 2025-10-21 — salva também as infos de requisição/preset no cálculo
-updateReqInfo(card);
-card._calc = card._calc || {};
-card._calc.req = { ...card._req };
-
-updateMini(card, card._calc);
-
-}
-
-function fillOutputs(card,mac,rTurno,rTempo,rRest,rCap,rFecha){
-  card.querySelector('.t-machine').textContent=mac||'—';
-  card.querySelector('.r-turno').textContent=rTurno;
-  card.querySelector('.r-tempo').textContent=rTempo;
-  card.querySelector('.r-restop').textContent=rRest;
-  card.querySelector('.r-capmp').textContent=rCap;
-  card.querySelector('.r-fecha').textContent=rFecha||'—';
-}
-
-/* header mini chips */
-function updateMini(card, info) {
-  const miniStatus = card.querySelector('.t-miniStatus');
-  const miniExtra  = card.querySelector('.t-miniExtra');
-
-  if (!info) {
-    miniStatus.textContent = '—';
-    miniStatus.className = 'chip';
-    miniExtra.style.display = 'none';
-    return;
-  }
-
-  // === Define o status principal (cor e texto)
-  if (info.fechaNesteTurno) {
-    miniStatus.textContent = 'Neste turno';
-    miniStatus.className = 'chip bad';
-  } else if (info.fechaProxTurno) {
-    miniStatus.textContent = 'Próx. turno';
-    miniStatus.className = 'chip warn';
-  } else {
-    miniStatus.textContent = 'OK';
-    miniStatus.className = 'chip ok';
-  }
-
-  // === Hora prevista de encerramento
-  const endDT = info.endDT || null;
-  const horaPrev = endDT ? fmtTime(endDT) : '';
-
-  // === Define o conteúdo extra
-  const simPreset = card.querySelector(`.reqWrap .pills input[value="sim"]`)?.checked;
-
-  if (simPreset) {
-    const v = card.querySelector('.presetTipo').value;
-    const label =
-      v === 'sequencia' ? 'Sequência' :
-      v === 'azul'      ? 'Setup Azul' :
-      v === 'verde'     ? 'Setup Verde' : 'Setup Vermelho';
-    miniExtra.textContent = `${label}${horaPrev ? ' / ' + horaPrev : ''}`;
-    miniExtra.style.display = 'inline-block';
-  } else {
-    const h   = card.querySelector('.req-hora').value || '';
-    const cod = (card.querySelector('.req-codigo').value || '').trim();
-    if (h || cod) {
-      miniExtra.textContent = `${h || '—'}${cod ? ' / ' + cod : ''}`;
-      miniExtra.style.display = 'inline-block';
-    } else {
-      miniExtra.style.display = 'none';
-    }
-  }
-}
-
-// ===== FECHA OUTROS CARDS =====
-function minimizarOutrosCards(cardAtual) {
-  $$('#list .card').forEach(card => {
-    if (card !== cardAtual) card.classList.add('collapsed');
-  });
-}
-
-/* Boot */
-document.addEventListener('DOMContentLoaded',()=>{
-  setBaseToNow(); updateBaseShift();
-  addCard(false);
-  ['baseDate','baseTime'].forEach(id=>{
-    document.getElementById(id).addEventListener('change',()=>{ updateBaseShift(); $$('#list .card').forEach(c=>compute(c)); });
-  });
-});
-// =======================================================
-// UPDATE 2025-10-20 — Envio de resumo geral via WhatsApp
-// =======================================================
-// =======================================================
-// UPDATE 2025-10-20 — Envio de resumo geral via WhatsApp (com Preset)
-// =======================================================
-// =======================================================
-// UPDATE 2025-10-20 — WhatsApp com preset persistente (usa card._calc.preset)
-// =======================================================
-// =======================================================
-// UPDATE 2025-10-21 — WhatsApp com dados salvos de requisição/preset
-// =======================================================
-// =======================================================
-// UPDATE 2025-10-20 — Resumo Clean EXPERTLINK (formatação refinada + emojis neutros)
-// =======================================================
-// =======================================================
-// UPDATE 2025-10-20 — WhatsApp resumo profissional (com data, divisórias e status preset)
-// =======================================================
-// =============================================================
-// UPDATE 2025-10-20 — FUNÇÃO DEFINITIVA enviarResumoWhatsApp()
-// Sistema EXPERTLINK / EXPERTCNC — MODO SEGURO CIRÚRGICO
-// =============================================================
-// Objetivo:
-// Gera automaticamente um relatório completo, limpo e formatado
-// para envio via WhatsApp, consolidando todas as máquinas (cards)
-// com informações de status, previsão, MP, OP e preset.
-// =============================================================
-// =============================================================
-// UPDATE 2025-10-20 — enviarResumoWhatsApp v2.2
-// Correção: mostra hora de encerramento no preset "já trouxe"
-// =============================================================
-// =============================================================
-// UPDATE 2025-10-20 — enviarResumoWhatsApp v3.1
-// Adiciona tempo da peça em formato duplo: mm:ss + decimal
-// =============================================================
-// =============================================================
-// UPDATE 2025-10-20 — enviarResumoWhatsApp v3.2
-// Ajusta regras de status e remove bloco de preset para máquinas OK
-// =============================================================
-// =============================================================
-// UPDATE 2025-10-20 — enviarResumoWhatsApp v3.3
-// Corrige detecção de status (sem falsos positivos com "NÃO VAI ENCERRAR")
-// Garante layout limpo e resultados coerentes com o card
-// =============================================================
-function enviarResumoWhatsApp() {
-  const cards = document.querySelectorAll('.card');
-  if (!cards.length) {
-    alert('Nenhuma máquina encontrada!');
-    return;
-  }
-
-  const agora = new Date();
-  const pad = n => String(n).padStart(2, '0');
-  const dataHoje = `${pad(agora.getDate())}/${pad(agora.getMonth() + 1)}/${agora.getFullYear()}`;
-  const horaAgora = `${pad(agora.getHours())}:${pad(agora.getMinutes())}`;
-
-  let resumo = `📊 *RESUMO GERAL — INÍCIO DO TURNO*\n_Dia ${dataHoje}_\n\n`;
-
-  cards.forEach((card, idx) => {
-    const maquina = card.querySelector('.f-machine')?.value?.trim() || '—';
-    const notice = card.querySelector('.notice');
-    const msg = notice?.innerText?.trim() || '';
-    if (!msg || msg.includes('Preencha tempo')) return;
-
-    const prod = parseInt(card.querySelector('.f-prod')?.value || '0', 10);
-    const meta = parseInt(card.querySelector('.f-meta')?.value || '0', 10);
-    const tempoMin = parseTempoToMinutes(card.querySelector('.f-time')?.value || '0');
-
-    // === Tempo formatado duplo ===
-    let tempoFmt = '—', tempoDec = '—';
-    if (isFinite(tempoMin) && tempoMin > 0) {
-      const m = Math.floor(tempoMin);
-      const s = Math.round((tempoMin - m) * 60);
-      tempoFmt = `${m}m${s > 0 ? s + 's' : ''}`;
-      tempoDec = tempoMin.toFixed(2).replace('.', ',');
-    }
-
-    const metaTurno = isFinite(tempoMin) && tempoMin > 0 ? Math.floor(480 / tempoMin) : '—';
-    const matchTempoRest = msg.match(/(\d+)h\s*(\d{1,2})min/);
-    const tempoRest = matchTempoRest ? `${matchTempoRest[1]}h ${matchTempoRest[2]}min` : '—';
-    const horaEncMatch = msg.match(/às\s(\d{2}:\d{2})/);
-    const horaEnc = horaEncMatch ? horaEncMatch[1] : '—';
-
-    // === DETECÇÃO DE STATUS (corrigida) ===
-    const texto = msg.toUpperCase();
-    let status = { cor: '🟩', txt: 'NÃO FECHA!' };
-
-    if (texto.includes('NÃO VAI ENCERRAR')) {
-      status = { cor: '🟩', txt: 'NÃO FECHA!' };
-    } else if (texto.includes('PRÓXIMO TURNO')) {
-      status = { cor: '🟧', txt: 'PRÓXIMO TURNO!' };
-    } else if (texto.includes('NESTE TURNO')) {
-      status = { cor: '🟥', txt: 'ENCERRA NESTE TURNO!' };
-    }
-
-    // === Montagem do resumo ===
-    resumo += `*TNL ${maquina}* - ${status.cor} ${status.txt}\n`;
-    resumo += `*Tempo até encerrar:* _${tempoRest}_\n`;
-    resumo += `*Meta da OP:* _${meta} peças_\n`;
-    resumo += `*Produzidas:* _${prod} peças_\n`;
-    resumo += `*Meta do turno:* _${metaTurno} peças_\n`;
-    resumo += `*Tempo da peça:* _${tempoFmt} — ${tempoDec} min_\n`;
-
-    // === Preset logic ===
-    const presetSim = card.querySelector(`input[type="radio"][value="sim"]`)?.checked;
-    const presetNao = card.querySelector(`input[type="radio"][value="nao"]`)?.checked;
-    const tipo = card.querySelector('.presetTipo')?.value || '';
-    const tipoNome =
-      tipo === 'sequencia' ? 'Sequência ⚪' :
-      tipo === 'azul' ? 'Setup Azul 🔵' :
-      tipo === 'verde' ? 'Setup Verde 🟢' :
-      tipo === 'vermelho' ? 'Setup Vermelho 🔴' : '';
-    const codigo = card.querySelector('.req-codigo')?.value || '—';
-    const horaReq = card.querySelector('.req-hora')?.value || horaEnc;
-
-    if (status.cor === '🟩') {
-      resumo += "_*Não há necessidade de solicitar nova OP*_\n";
-    } else {
-      resumo += `\n*Preset já trouxe?*\n`;
-      if (presetSim) {
-        resumo += `✅ _SIM_ — *${tipoNome}* às *${horaEnc}*\n`;
-      } else if (presetNao) {
-        resumo += `❌ _NÃO_ — Solicitar às *${horaReq}*\n_Item:_ *${codigo}*\n`;
-      } else {
-        resumo += `⚙️ _Informação não definida._\n`;
-      }
-    }
-
-    if (idx < cards.length - 1) resumo += `──────────────────────────────\n`;
-    resumo += `\n`;
-  });
-
-  resumo += `🕒 *Gerado às ${horaAgora} pelo sistema EXPERTLINK* ✅`;
-
-  const textoCodificado = encodeURIComponent(resumo);
-  window.open(`https://wa.me/?text=${textoCodificado}`, '_blank');
-}
-
-
-</script>
-<script>
-// UPDATE 2025-10-20 — Registro do PWA Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js')
-    .then(() => console.log('Service Worker registrado com sucesso.'))
-    .catch(err => console.error('Falha ao registrar o Service Worker:', err));
-}
-</script>
-
+    document.querySelector("#calcAllBtn").addEventListener("click", render);
+    document.querySelector("#settingsBtn").addEventListener("click", openSettings);
+    document.querySelector("#saveSettingsBtn").addEventListener("click", saveSettings);
+    document.querySelector("#whatsBtn").addEventListener("click", sendWhatsApp);
+    el.baseDate.addEventListener("input", () => {
+      state.base.date = el.baseDate.value;
+      saveState();
+    });
+    el.baseDate.addEventListener("change", () => {
+      state.base.date = el.baseDate.value;
+      render();
+    });
+    el.baseTime.addEventListener("input", () => {
+      state.base.time = el.baseTime.value;
+      saveState();
+    });
+    el.baseTime.addEventListener("change", () => {
+      state.base.time = el.baseTime.value;
+      render();
+    });
+
+    render();
+  </script>
 </body>
 </html>
