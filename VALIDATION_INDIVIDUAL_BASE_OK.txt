@@ -1,1 +1,0 @@
-Validation passed for fixed per-machine base time, live remaining countdown, persistence migration and iPhone zoom safeguards.
