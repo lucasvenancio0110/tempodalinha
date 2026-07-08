@@ -1,0 +1,128 @@
+name: Temporary test individual base
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/temp-test-individual-base.yml
+
+permissions:
+  contents: write
+
+jobs:
+  test-feature:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/horario-base-individual
+          fetch-depth: 0
+
+      - name: Extract and check JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
+          if not scripts:
+              raise SystemExit('Script principal não encontrado')
+          Path('/tmp/app.js').write_text(scripts[-1], encoding='utf-8')
+          PY
+          node --check /tmp/app.js
+
+      - name: Test fixed forecast, remaining and migration
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const vm = require('vm');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const matches = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+          if (!matches.length) throw new Error('Script principal não encontrado');
+          const source = matches[matches.length - 1][1];
+          const cutoff = source.indexOf('document.querySelector("#addMachineBtn")');
+          if (cutoff < 0) throw new Error('Ponto de corte dos listeners não encontrado');
+
+          const NativeDate = Date;
+          let currentNow = new NativeDate(2026, 6, 8, 17, 30, 0, 0).getTime();
+          class MockDate extends NativeDate {
+            constructor(...args) {
+              super(...(args.length ? args : [currentNow]));
+            }
+            static now() { return currentNow; }
+          }
+
+          const context = {
+            console,
+            Date: MockDate,
+            Math,
+            Number,
+            String,
+            Array,
+            Object,
+            JSON,
+            NaN,
+            crypto: { randomUUID: () => 'test-machine-id' },
+            localStorage: { getItem: () => null, setItem: () => {} },
+            document: { querySelector: () => ({}), querySelectorAll: () => [], addEventListener: () => {} },
+            window: { open: () => {} },
+            setTimeout: () => 0,
+            clearTimeout: () => {},
+            setInterval: () => 0,
+            setMockNow: value => { currentNow = value; }
+          };
+
+          const testCode = `${source.slice(0, cutoff)}
+            const base = new Date(2026, 6, 8, 16, 0, 0, 0).getTime();
+            const machine = DEFAULT_MACHINE(base);
+            Object.assign(machine, {
+              machine: '95',
+              timeInput: '2,24',
+              pieceLength: '1',
+              target: '100',
+              producedManual: '',
+              barMode: 'pieces',
+              partialPieces: '100',
+              fullBars: 0
+            });
+            const originalBase = machine.baseTimestamp;
+            const at1730 = calcMachine(machine);
+            setMockNow(new Date(2026, 6, 8, 18, 0, 0, 0).getTime());
+            const at1800 = calcMachine(machine);
+            if (fmtTime(at1730.endDT) !== '20:00') throw new Error('Previsão inicial deveria ser 20:00');
+            if (fmtTime(at1800.endDT) !== '20:00') throw new Error('Previsão foi deslocada pelo relógio atual');
+            if (Math.round(at1730.restMin) !== 150) throw new Error('Remaining às 17:30 deveria ser 150 min');
+            if (Math.round(at1800.restMin) !== 120) throw new Error('Remaining às 18:00 deveria ser 120 min');
+            if (machine.baseTimestamp !== originalBase) throw new Error('Horário-base foi alterado');
+            const migrated = normalizeMachine({ machine: '91', trays: ['12'], target: '500' }, base);
+            if (migrated.baseTimestamp !== base) throw new Error('Máquina antiga não recebeu horário-base');
+            if (migrated.machine !== '91' || migrated.target !== '500' || migrated.trays[0] !== '12') throw new Error('Migração perdeu dados');
+            setMockNow(new Date(2026, 6, 8, 20, 0, 0, 0).getTime());
+            const reached = calcMachine(machine);
+            if (reached.status !== 'reached') throw new Error('Previsão atingida não foi sinalizada');
+            if (reached.restMin !== 0) throw new Error('Remaining deveria zerar ao atingir a previsão');
+          `;
+          vm.runInNewContext(testCode, context);
+          console.log('Teste funcional aprovado.');
+          NODE
+
+      - name: Validate safeguards
+        run: |
+          grep -q 'maximum-scale=1' index.html
+          grep -q 'user-scalable=no' index.html
+          grep -q 'gesturestart' index.html
+          grep -q 'touches.length > 1' index.html
+          grep -q 'refreshLiveRemaining' index.html
+          ! grep -q 'id="useNowBtn"' index.html
+          ! grep -q 'id="baseDate"' index.html
+          ! grep -q 'id="baseTime"' index.html
+
+      - name: Mark successful validation
+        run: |
+          printf 'Validation passed for fixed per-machine base time, live remaining countdown, persistence migration and iPhone zoom safeguards.\n' > VALIDATION_INDIVIDUAL_BASE_OK.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add VALIDATION_INDIVIDUAL_BASE_OK.txt
+          git commit -m 'test: validar previsão fixa e horário-base individual'
+          git push origin HEAD:feature/horario-base-individual
