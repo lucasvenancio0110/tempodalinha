@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07141c">
   <title>Tempo da Linha | VENANC Tools V6</title>
   <style>
@@ -39,7 +39,7 @@
     }
 
     * { box-sizing: border-box; }
-    html { min-height: 100%; scroll-behavior: smooth; }
+    html { min-height: 100%; scroll-behavior: smooth; touch-action: manipulation; -webkit-text-size-adjust: 100%; }
     body {
       min-height: 100%;
       margin: 0;
@@ -665,7 +665,7 @@
   </header>
 
   <main>
-    <section class="compactControl" aria-label="Controle da projeção">
+    <section class="compactControl" aria-label="Relógio e ações da linha">
       <div class="compactClockBlock">
         <div>
           <span class="compactLabel">HORÁRIO ATUAL</span>
@@ -673,18 +673,7 @@
         </div>
         <span class="shiftPill" id="baseShift">-</span>
       </div>
-      <div class="compactBaseGrid">
-        <div class="field">
-          <label for="baseDate">Data-base</label>
-          <input class="input" id="baseDate" type="date">
-        </div>
-        <div class="field">
-          <label for="baseTime">Hora-base</label>
-          <input class="input" id="baseTime" type="time" step="60">
-        </div>
-      </div>
       <div class="compactActions">
-        <button class="btn btnGhost" id="useNowBtn" type="button">Usar agora</button>
         <button class="btn btnPrimary" id="whatsBtn" type="button">↗ Enviar resumo</button>
       </div>
     </section>
@@ -898,7 +887,7 @@
   <script>
     /*
       TEMPO DA LINHA — VENANC Tools
-      V3 — solicitação automática + destaque executivo da projeção
+      V7 — horário-base individual + previsão fixa + remaining time em tempo real
       Revisão visual premium + correções funcionais:
       1. Botão WhatsApp restaurado no HTML.
       2. Parser seguro: 2,34 e 2:34 = 2m34s; 90 = 90 segundos.
@@ -906,6 +895,9 @@
       4. Resumo da célula com leitura direta por janela de encerramento.
       5. Gabaritos opcionais: a projeção funciona sem confirmação de gabaritos.
       6. Campo direto de produzidas e relatório WhatsApp mais enxuto.
+      7. Cada máquina possui horário-base persistente e previsão independente.
+      8. O relógio atual reduz somente o tempo restante, sem deslocar a previsão.
+      9. Zoom por pinça, duplo toque e foco de campo bloqueado no iPhone.
     */
 
     const STORAGE_KEY = "expertcnc-reformulado-v1"; // Mantido para preservar os dados já cadastrados
@@ -916,8 +908,9 @@
       turnMinutes: 480
     };
 
-    const DEFAULT_MACHINE = () => ({
+    const DEFAULT_MACHINE = (baseTimestamp = Date.now()) => ({
       id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+      baseTimestamp,
       machine: "",
       timeInput: "",
       pieceLength: "",
@@ -941,8 +934,6 @@
     const el = {
       cards: document.querySelector("#cards"),
       empty: document.querySelector("#emptyState"),
-      baseDate: document.querySelector("#baseDate"),
-      baseTime: document.querySelector("#baseTime"),
       baseShift: document.querySelector("#baseShift"),
       modal: document.querySelector("#settingsModal"),
       barLength: document.querySelector("#barLength"),
@@ -959,33 +950,42 @@
       return String(n).padStart(2, "0");
     }
 
-    function getNowBase() {
-      const now = new Date();
-      return {
-        date: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`,
-        time: `${pad2(now.getHours())}:${pad2(now.getMinutes())}`
-      };
+    function getTimestampFromLegacyBase(base) {
+      if (!base || !base.date || !base.time) return NaN;
+      const [y, m, d] = String(base.date).split("-").map(Number);
+      const [hh, mm] = String(base.time).split(":").map(Number);
+      if (!y || !m || !d || !Number.isFinite(hh) || !Number.isFinite(mm)) return NaN;
+      const value = new Date(y, m - 1, d, hh, mm, 0, 0).getTime();
+      return Number.isFinite(value) ? value : NaN;
     }
 
     function loadState() {
-      const base = getNowBase();
+      const nowTimestamp = Date.now();
       try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
         if (saved && saved.settings && Array.isArray(saved.machines)) {
+          const legacyTimestamp = getTimestampFromLegacyBase(saved.base);
+          const migrationTimestamp = Number.isFinite(legacyTimestamp) ? legacyTimestamp : nowTimestamp;
           return {
             settings: { ...DEFAULT_SETTINGS, ...saved.settings },
-            base: { ...base, ...(saved.base || {}) },
-            machines: saved.machines.length ? saved.machines.map(normalizeMachine) : [DEFAULT_MACHINE()]
+            machines: saved.machines.length
+              ? saved.machines.map(machine => normalizeMachine(machine, migrationTimestamp))
+              : [DEFAULT_MACHINE(nowTimestamp)]
           };
         }
       } catch (_) {}
-      return { settings: { ...DEFAULT_SETTINGS }, base, machines: [DEFAULT_MACHINE()] };
+      return { settings: { ...DEFAULT_SETTINGS }, machines: [DEFAULT_MACHINE(nowTimestamp)] };
     }
 
-    function normalizeMachine(machine) {
+    function normalizeMachine(machine, fallbackTimestamp = Date.now()) {
+      const persistedTimestamp = Number(machine && machine.baseTimestamp);
+      const baseTimestamp = Number.isFinite(persistedTimestamp) && persistedTimestamp > 0
+        ? persistedTimestamp
+        : fallbackTimestamp;
       return {
-        ...DEFAULT_MACHINE(),
+        ...DEFAULT_MACHINE(baseTimestamp),
         ...machine,
+        baseTimestamp,
         trays: Array.isArray(machine.trays) && machine.trays.length ? machine.trays : [""],
         traysCollapsed: machine.traysCollapsed !== false
       };
@@ -1056,11 +1056,12 @@
       return Number.isFinite(seconds) ? seconds / 60 : NaN;
     }
 
-    function getBaseDateTime() {
-      const [y, m, d] = state.base.date.split("-").map(Number);
-      const [hh, mm] = state.base.time.split(":").map(Number);
-      if (!y || !m || !d || !Number.isFinite(hh) || !Number.isFinite(mm)) return new Date();
-      return new Date(y, m - 1, d, hh, mm, 0, 0);
+    function getMachineBaseDateTime(machine) {
+      const timestamp = Number(machine && machine.baseTimestamp);
+      if (Number.isFinite(timestamp) && timestamp > 0) return new Date(timestamp);
+      const fallback = Date.now();
+      machine.baseTimestamp = fallback;
+      return new Date(fallback);
     }
 
     function getShiftWindowFor(date) {
@@ -1120,7 +1121,8 @@
     }
 
     function calcMachine(machine) {
-      const baseDT = getBaseDateTime();
+      const baseDT = getMachineBaseDateTime(machine);
+      const nowDT = new Date();
       const tempoMin = parseTempoToMinutes(machine.timeInput);
       const pieceLength = parseNumber(machine.pieceLength);
       const rawTarget = parseNumber(machine.target);
@@ -1228,10 +1230,12 @@
         safety += 1;
       }
 
-      const restMin = Math.max(0, Math.floor((endDT - baseDT) / 60000));
+      const restMin = Math.max(0, (endDT - nowDT) / 60000);
+      const forecastReached = nowDT >= endDT;
       const reason = producible < remainingOP ? "mp" : "meta";
-      const status = getOperationalStatus(restMin);
+      const status = forecastReached ? "reached" : getOperationalStatus(restMin);
       const labels = {
+        reached: ["Previsão atingida", "bad", "bad", "O horário previsto de encerramento foi atingido."],
         now: ["Neste turno", "bad", "bad", "Vai encerrar neste turno."],
         next: ["Próximo turno", "warn", "warn", "Vai encerrar no próximo turno."],
         ok: ["Estável", "ok", "ok", "Não encerra no turno atual nem no próximo."]
@@ -1256,7 +1260,8 @@
         reason,
         endDT,
         restMin,
-        showRequest: restMin < 16 * 60,
+        forecastReached,
+        showRequest: forecastReached || restMin < 16 * 60,
         kpis: buildKpis(metaTurno, tempoMin, remainingOP, capacity, endDT, restMin)
       };
     }
@@ -1291,9 +1296,7 @@
     }
 
     function render() {
-      el.baseDate.value = state.base.date;
-      el.baseTime.value = state.base.time;
-      el.baseShift.textContent = shiftName(getShiftWindowFor(getBaseDateTime()).id);
+      el.baseShift.textContent = shiftName(getShiftWindowFor(new Date()).id);
       el.cards.innerHTML = "";
       el.empty.classList.toggle("visible", state.machines.length === 0);
       const calcs = [];
@@ -1311,17 +1314,10 @@
       const node = template.content.firstElementChild.cloneNode(true);
       node.dataset.id = machine.id;
       node.classList.toggle("collapsed", !!machine.collapsed);
-      node.classList.toggle("status-ok", calc.badgeClass === "ok");
-      node.classList.toggle("status-warn", calc.badgeClass === "warn");
-      node.classList.toggle("status-bad", calc.badgeClass === "bad");
 
       node.querySelector('[data-role="titleMachine"]').textContent = machine.machine || '-';
       node.querySelector('[data-role="machineToken"]').textContent = machine.machine || '--';
-      const badge = node.querySelector('[data-role="statusBadge"]');
-      badge.textContent = calc.statusText;
-      badge.className = `badge ${calc.badgeClass || ""}`.trim();
-      node.querySelector('[data-role="miniRest"]').textContent = calc.valid && calc.endDT ? `${formatMinutes(calc.restMin)} restantes` : "Preencha os dados da máquina";
-      node.querySelector('[data-role="miniEnd"]').textContent = calc.valid && calc.endDT ? `previsão ${fmtDate(calc.endDT)} às ${fmtTime(calc.endDT)}` : "Sem previsão calculada";
+      applyDynamicCard(node, machine, calc);
 
       bindField(node, machine, "machine");
       bindField(node, machine, "timeInput");
@@ -1345,10 +1341,45 @@
       node.querySelector('[data-role="mpPreview"]').textContent = `Capacidade com MP: ${calc.capacity} ${plural(calc.capacity, "peça", "peças")} · ${calc.perBar} por barra`;
 
       renderTrays(node, machine, calc);
-      renderNotice(node, calc);
       renderRequest(node, machine, calc);
       bindActions(node, machine);
       return node;
+    }
+
+    function applyDynamicCard(root, machine, calc) {
+      root.classList.toggle("status-ok", calc.badgeClass === "ok");
+      root.classList.toggle("status-warn", calc.badgeClass === "warn");
+      root.classList.toggle("status-bad", calc.badgeClass === "bad");
+
+      const badge = root.querySelector('[data-role="statusBadge"]');
+      badge.textContent = calc.statusText;
+      badge.className = `badge ${calc.badgeClass || ""}`.trim();
+
+      const miniRest = root.querySelector('[data-role="miniRest"]');
+      const miniEnd = root.querySelector('[data-role="miniEnd"]');
+      if (calc.valid && calc.endDT) {
+        miniRest.textContent = calc.status === "reached" ? "Previsão atingida" : `${formatMinutes(calc.restMin)} restantes`;
+        miniEnd.textContent = `previsão fixa ${fmtDate(calc.endDT)} às ${fmtTime(calc.endDT)}`;
+      } else {
+        miniRest.textContent = "Preencha os dados da máquina";
+        miniEnd.textContent = "Sem previsão calculada";
+      }
+
+      renderNotice(root, calc);
+      const requestBox = root.querySelector('[data-role="requestBox"]');
+      if (requestBox) requestBox.classList.toggle("visible", !!calc.showRequest);
+    }
+
+    function refreshLiveRemaining() {
+      const calcs = [];
+      state.machines.forEach(machine => {
+        const calc = calcMachine(machine);
+        calcs.push(calc);
+        const root = [...document.querySelectorAll(".machineCard")].find(card => card.dataset.id === machine.id);
+        if (root) applyDynamicCard(root, machine, calc);
+      });
+      updateSummary(calcs);
+      el.baseShift.textContent = shiftName(getShiftWindowFor(new Date()).id);
     }
 
     let liveRenderTimer = null;
@@ -1624,7 +1655,7 @@
     }
 
     function prioritySquare(calc) {
-      return calc.status === "now" ? "\u{1F7E5}" : "\u{1F7E7}";
+      return calc.status === "now" || calc.status === "reached" ? "\u{1F7E5}" : "\u{1F7E7}";
     }
 
     function overviewLine(machine, calc) {
@@ -1633,20 +1664,21 @@
 
       if (!calc.valid) return `\u2B1C *TNL ${name}* — Ciclo: _${cycle}_ — Dados incompletos`;
       if (calc.status === "done") return `\u2705 *TNL ${name}* — Ciclo: _${cycle}_ — OP finalizada`;
+      if (calc.status === "reached") return `\u{1F7E5} *TNL ${name}* — Ciclo: _${cycle}_ — Previsão atingida às _${fmtTime(calc.endDT)}_`;
       if (calc.status === "now") return `\u{1F7E5} *TNL ${name}* — Ciclo: _${cycle}_ — Encerra neste turno às _${fmtTime(calc.endDT)}_`;
       if (calc.status === "next") return `\u{1F7E7} *TNL ${name}* — Ciclo: _${cycle}_ — Encerra no próximo turno às _${fmtTime(calc.endDT)}_`;
       return `\u{1F7E9} *TNL ${name}* — Ciclo: _${cycle}_ — Não encerra`;
     }
 
     function buildWhatsAppReport() {
-      const baseDT = getBaseDateTime();
+      const baseDT = new Date();
       const lines = [];
       const calculated = state.machines
         .map(machine => ({ machine, calc: calcMachine(machine) }))
         .filter(item => String(item.machine.machine || "").trim() !== "");
       const validMachines = calculated.filter(item => item.calc.valid);
       const priorities = validMachines
-        .filter(item => (item.calc.status === "now" || item.calc.status === "next") && item.calc.status !== "done")
+        .filter(item => item.calc.status === "reached" || item.calc.status === "now" || item.calc.status === "next")
         .sort((a, b) => a.calc.endDT - b.calc.endDT);
       const requestItems = priorities.filter(item => item.machine.presetMode !== "yes");
       const deliveredPresets = priorities.filter(item => item.machine.presetMode === "yes");
@@ -1709,10 +1741,6 @@
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
     }
 
-    function useNow() {
-      state.base = getNowBase();
-      render();
-    }
 
     function updateLiveClock() {
       const now = new Date();
@@ -1728,29 +1756,31 @@
     });
     document.querySelector("#whatsBtn")?.addEventListener("click", sendWhatsApp);
     document.querySelector("#settingsBtn").addEventListener("click", openSettings);
-    document.querySelector("#useNowBtn").addEventListener("click", useNow);
     document.querySelector("#saveSettingsBtn").addEventListener("click", saveSettings);
 
-    el.baseDate.addEventListener("input", () => {
-      state.base.date = el.baseDate.value;
-      saveState();
-    });
-    el.baseDate.addEventListener("change", () => {
-      state.base.date = el.baseDate.value;
-      render();
-    });
-    el.baseTime.addEventListener("input", () => {
-      state.base.time = el.baseTime.value;
-      saveState();
-    });
-    el.baseTime.addEventListener("change", () => {
-      state.base.time = el.baseTime.value;
-      render();
-    });
+    function blockIOSZoom() {
+      ["gesturestart", "gesturechange", "gestureend"].forEach(eventName => {
+        document.addEventListener(eventName, event => event.preventDefault(), { passive: false });
+      });
+      document.addEventListener("touchmove", event => {
+        if (event.touches && event.touches.length > 1) event.preventDefault();
+      }, { passive: false });
+      document.addEventListener("dblclick", event => event.preventDefault(), { passive: false });
+      let lastTouchEnd = 0;
+      document.addEventListener("touchend", event => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) event.preventDefault();
+        lastTouchEnd = now;
+      }, { passive: false });
+    }
 
-    updateLiveClock();
-    setInterval(updateLiveClock, 1000);
+    blockIOSZoom();
     render();
+    updateLiveClock();
+    setInterval(() => {
+      updateLiveClock();
+      refreshLiveRemaining();
+    }, 1000);
   </script>
 </body>
 </html>
