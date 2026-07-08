@@ -1,4 +1,4 @@
-name: Temporary individual base implementation
+name: Temporary individual base validation
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  apply-on-feature-branch:
+  refine-and-test-feature:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout feature branch
@@ -20,8 +20,24 @@ jobs:
           ref: feature/horario-base-individual
           fetch-depth: 0
 
-      - name: Apply implementation
-        run: python scripts/apply_individual_base.py
+      - name: Apply final refinements
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          changes = {
+              '<title>Tempo da Linha | VENANC Tools V6</title>': '<title>Tempo da Linha | VENANC Tools V7</title>',
+              'const min = Math.max(0, Math.floor(totalMin));': 'const min = totalMin > 0 ? Math.ceil(totalMin) : 0;',
+              'el.summaryBad.textContent = String(calcs.filter(calc => calc.status === "now").length);': 'el.summaryBad.textContent = String(calcs.filter(calc => calc.status === "now" || calc.status === "reached").length);'
+          }
+          for old, new in changes.items():
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Trecho esperado não encontrado uma única vez: {old} ({count})')
+              text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8', newline='\n')
+          PY
 
       - name: Validate JavaScript syntax
         run: |
@@ -36,20 +52,95 @@ jobs:
           PY
           node --check /tmp/app.js
 
-      - name: Validate implementation
+      - name: Test fixed forecast and live remaining
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const vm = require('vm');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const matches = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+          if (!matches.length) throw new Error('Script principal não encontrado');
+          const source = matches[matches.length - 1][1];
+          const cutoff = source.indexOf('document.querySelector("#addMachineBtn")');
+          if (cutoff < 0) throw new Error('Ponto de corte dos listeners não encontrado');
+
+          const NativeDate = Date;
+          let mockNow = new NativeDate(2026, 6, 8, 17, 30, 0, 0).getTime();
+          class MockDate extends NativeDate {
+            constructor(...args) {
+              super(...(args.length ? args : [mockNow]));
+            }
+            static now() { return mockNow; }
+          }
+
+          const context = {
+            console,
+            Date: MockDate,
+            Math,
+            Number,
+            String,
+            Array,
+            Object,
+            JSON,
+            NaN,
+            crypto: { randomUUID: () => 'test-machine-id' },
+            localStorage: { getItem: () => null, setItem: () => {} },
+            document: { querySelector: () => ({}), querySelectorAll: () => [], addEventListener: () => {} },
+            window: { open: () => {} },
+            setTimeout: () => 0,
+            clearTimeout: () => {},
+            setInterval: () => 0
+          };
+
+          const testCode = `${source.slice(0, cutoff)}
+            const base = new Date(2026, 6, 8, 16, 0, 0, 0).getTime();
+            const machine = DEFAULT_MACHINE(base);
+            Object.assign(machine, {
+              machine: '95',
+              timeInput: '2,24',
+              pieceLength: '1',
+              target: '100',
+              producedManual: '',
+              barMode: 'pieces',
+              partialPieces: '100',
+              fullBars: 0
+            });
+            const originalBase = machine.baseTimestamp;
+            const at1730 = calcMachine(machine);
+            mockNow = new Date(2026, 6, 8, 18, 0, 0, 0).getTime();
+            const at1800 = calcMachine(machine);
+            if (fmtTime(at1730.endDT) !== '20:00') throw new Error('Previsão inicial deveria ser 20:00');
+            if (fmtTime(at1800.endDT) !== '20:00') throw new Error('Previsão foi deslocada pelo relógio atual');
+            if (Math.round(at1730.restMin) !== 150) throw new Error('Remaining às 17:30 deveria ser 150 min');
+            if (Math.round(at1800.restMin) !== 120) throw new Error('Remaining às 18:00 deveria ser 120 min');
+            if (machine.baseTimestamp !== originalBase) throw new Error('Horário-base foi alterado');
+            mockNow = new Date(2026, 6, 8, 20, 0, 0, 0).getTime();
+            const reached = calcMachine(machine);
+            if (reached.status !== 'reached') throw new Error('Previsão atingida não foi sinalizada');
+          `;
+          vm.runInNewContext(testCode, context);
+          console.log('Teste funcional aprovado: previsão fixa e remaining dinâmico.');
+          NODE
+
+      - name: Validate implementation safeguards
         run: |
           git diff --check
           grep -q 'baseTimestamp' index.html
           grep -q 'refreshLiveRemaining' index.html
           grep -q 'user-scalable=no' index.html
+          grep -q 'calc.status === "now" || calc.status === "reached"' index.html
           ! grep -q 'id="useNowBtn"' index.html
           ! grep -q 'id="baseDate"' index.html
           ! grep -q 'id="baseTime"' index.html
 
-      - name: Commit on feature branch
+      - name: Commit refinements on feature branch
         run: |
+          if git diff --quiet -- index.html; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'feat: adicionar horário-base individual por máquina'
+          git commit -m 'fix: refinar contador e status da previsão atingida'
           git push origin HEAD:feature/horario-base-individual
