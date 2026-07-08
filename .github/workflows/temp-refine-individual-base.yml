@@ -1,0 +1,59 @@
+name: Temporary refine individual base
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/temp-refine-individual-base.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refine-feature:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/horario-base-individual
+          fetch-depth: 0
+
+      - name: Refine countdown and reached status
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          replacements = [
+              ('<title>Tempo da Linha | VENANC Tools V6</title>', '<title>Tempo da Linha | VENANC Tools V7</title>'),
+              ('const min = Math.max(0, Math.floor(totalMin));', 'const min = totalMin > 0 ? Math.ceil(totalMin) : 0;'),
+              ('el.summaryBad.textContent = String(calcs.filter(calc => calc.status === "now").length);', 'el.summaryBad.textContent = String(calcs.filter(calc => calc.status === "now" || calc.status === "reached").length);')
+          ]
+          for old, new in replacements:
+              if text.count(old) != 1:
+                  raise SystemExit(f'Não foi possível aplicar: {old}')
+              text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8', newline='\n')
+          PY
+
+      - name: Check syntax and safeguards
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('index.html').read_text(encoding='utf-8')
+          script = re.findall(r'<script>(.*?)</script>', html, flags=re.S)[-1]
+          Path('/tmp/app.js').write_text(script, encoding='utf-8')
+          PY
+          node --check /tmp/app.js
+          git diff --check
+          grep -q 'calc.status === "now" || calc.status === "reached"' index.html
+
+      - name: Commit refinement
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'fix: refinar contador e status da previsão atingida'
+          git push origin HEAD:feature/horario-base-individual
