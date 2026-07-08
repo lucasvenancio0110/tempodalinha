@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07141c">
-  <title>Tempo da Linha | VENANC Tools V6</title>
+  <title>Tempo da Linha | VENANC Tools V7</title>
   <style>
     :root {
       --bg: #0b1117;
@@ -1101,7 +1101,7 @@
 
     function formatMinutes(totalMin) {
       if (totalMin == null || !Number.isFinite(totalMin)) return "-";
-      const min = Math.max(0, Math.floor(totalMin));
+      const min = totalMin > 0 ? Math.ceil(totalMin) : 0;
       return `${Math.floor(min / 60)}h ${pad2(min % 60)}min`;
     }
 
@@ -1290,7 +1290,7 @@
 
     function updateSummary(calcs) {
       el.summaryTotal.textContent = String(state.machines.length);
-      el.summaryBad.textContent = String(calcs.filter(calc => calc.status === "now").length);
+      el.summaryBad.textContent = String(calcs.filter(calc => calc.status === "now" || calc.status === "reached").length);
       el.summaryWarn.textContent = String(calcs.filter(calc => calc.status === "next").length);
       el.summaryOk.textContent = String(calcs.filter(calc => calc.status === "ok" || calc.status === "done").length);
     }
