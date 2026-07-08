@@ -1,0 +1,61 @@
+name: Apply individual machine base time
+
+on:
+  push:
+    branches:
+      - feature/horario-base-individual
+    paths:
+      - scripts/apply_individual_base.py
+      - .github/workflows/apply-individual-base.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/horario-base-individual
+          fetch-depth: 0
+
+      - name: Apply migration
+        run: python scripts/apply_individual_base.py
+
+      - name: Validate JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
+          if not scripts:
+              raise SystemExit('Nenhum script inline encontrado')
+          Path('/tmp/app.js').write_text(scripts[-1], encoding='utf-8')
+          PY
+          node --check /tmp/app.js
+
+      - name: Validate diff
+        run: |
+          git diff --check
+          grep -q 'baseTimestamp' index.html
+          grep -q 'refreshLiveRemaining' index.html
+          grep -q 'user-scalable=no' index.html
+          ! grep -q 'id="useNowBtn"' index.html
+          ! grep -q 'id="baseDate"' index.html
+          ! grep -q 'id="baseTime"' index.html
+
+      - name: Commit implementation
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'feat: adicionar horário-base individual por máquina'
+          git push origin HEAD:feature/horario-base-individual
