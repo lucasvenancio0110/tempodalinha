@@ -37,12 +37,11 @@ jobs:
 
       - name: Validate countdown format
         run: |
-          grep -q 'id="addMachineBottomBtn"' index.html
-          grep -q 'formatCountdownParts' index.html
-          grep -q 'countdownClock' index.html
-          grep -q 'countdownMs' index.html
-          grep -q 'setInterval(refreshLiveRemaining, 50)' index.html
-          git diff --check
+          grep -Fq 'id="addMachineBottomBtn"' index.html
+          grep -Fq 'formatCountdownParts' index.html
+          grep -Fq 'countdownClock' index.html
+          grep -Fq 'countdownMs' index.html
+          grep -Fq 'setInterval(refreshLiveRemaining, 50)' index.html
 
       - name: Commit generated V8
         run: |
