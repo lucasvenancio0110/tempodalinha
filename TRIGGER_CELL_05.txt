@@ -1,0 +1,2 @@
+Invert only Cell 05 order.
+Normalize line endings before merge.
