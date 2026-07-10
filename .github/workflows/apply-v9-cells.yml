@@ -22,7 +22,9 @@ jobs:
       - name: Apply V9
         id: apply
         continue-on-error: true
-        run: python scripts/apply_v9_cells.py > apply-v9.log 2>&1
+        run: |
+          sed -i "s/'CÉLULA 10', //" scripts/apply_v9_cells.py
+          python scripts/apply_v9_cells.py > apply-v9.log 2>&1
 
       - name: Upload apply log
         if: always()
