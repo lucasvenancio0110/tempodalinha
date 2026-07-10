@@ -83,19 +83,21 @@ one(
     'campo início'
 )
 one(
-    '''        baseTimestamp: Number.isFinite(baseTimestamp) ? baseTimestamp : Date.now(),
-        machine: formatTnl(machine.machine),''',
-    '''        baseTimestamp: Number.isFinite(baseTimestamp) ? baseTimestamp : Date.now(),
+    '''        baseTimestamp,
+        trays: Array.isArray(machine.trays) && machine.trays.length ? machine.trays : [""],''',
+    '''        baseTimestamp,
         calculationStartedAt: Number.isFinite(Number(machine.calculationStartedAt)) ? Number(machine.calculationStartedAt) : null,
-        machine: formatTnl(machine.machine),''',
+        trays: Array.isArray(machine.trays) && machine.trays.length ? machine.trays : [""],''',
     'migração início'
 )
 one(
-    '''    function fmtTime(date) {
-      return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+    '''    function fmtTime(d) {
+      if (!d) return "-";
+      return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
     }''',
-    '''    function fmtTime(date) {
-      return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+    '''    function fmtTime(d) {
+      if (!d) return "-";
+      return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
     }
 
     function fmtExactDateTime(timestamp) {
