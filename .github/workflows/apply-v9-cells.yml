@@ -20,7 +20,22 @@ jobs:
           fetch-depth: 0
 
       - name: Apply V9
-        run: python scripts/apply_v9_cells.py
+        id: apply
+        continue-on-error: true
+        run: python scripts/apply_v9_cells.py > apply-v9.log 2>&1
+
+      - name: Upload apply log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apply-v9-log
+          path: apply-v9.log
+
+      - name: Stop on apply failure
+        if: steps.apply.outcome == 'failure'
+        run: |
+          cat apply-v9.log
+          exit 1
 
       - name: Validate JavaScript
         run: |
