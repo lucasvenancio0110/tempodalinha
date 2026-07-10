@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07141c">
-  <title>Tempo da Linha | VENANC Tools V9.1</title>
+  <title>Tempo da Linha | VENANC Tools V9.2</title>
   <style>
     :root {
       --bg: #0b1117;
@@ -99,11 +99,24 @@
     body.cell-selection .appHeader, body.cell-selection main { display:none; }
     body:not(.cell-selection) .cellSelector { display:none; }
     .cellIndicator { color:var(--primary); font-size:12px; font-weight:950; letter-spacing:.05em; }
-    .machineCard.emptyMachine .cardHead { border-bottom:0; }
-    .machineCard.emptyMachine .cardMini .dot,
-    .machineCard.emptyMachine [data-role="miniEnd"] { display:none; }
-    .machineCard.emptyMachine .cardHead { cursor:pointer; }
+    .machineCard.emptyMachine .cardHead { border-bottom:0; cursor:pointer; }
+    .machineCard.emptyMachine .cardMini { display:none; }
     .machineCard.emptyMachine .machineToken { min-width:64px; }
+    .machineCard.emptyMachine .cardIdentity { display:flex; align-items:center; }
+    .cardCountdown {
+      display:inline-flex;
+      align-items:baseline;
+      gap:2px;
+      color:#294751;
+      font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+      font-variant-numeric:tabular-nums;
+      white-space:nowrap;
+    }
+    .cardCountdown .clockMain { font-size:15px; font-weight:950; letter-spacing:-.06em; }
+    .cardCountdown .clockMs { color:#6d878f; font-size:10px; font-weight:900; }
+    .cardPrediction { color:#768991; font-size:12px; font-weight:800; }
+    .machineCard:not(.emptyMachine) .cardMini { margin-top:7px; row-gap:4px; }
+    .machineCard:not(.emptyMachine) .cardIdentity { min-width:0; }
 
     .appHeader {
       position: sticky;
@@ -891,13 +904,12 @@
           <div class="machineToken" data-role="machineToken">--</div>
           <div class="cardIdentity">
             <div class="cardName">
-              <strong>TNL <span data-role="titleMachine">-</span></strong>
               <span class="badge" data-role="statusBadge">Aguardando dados</span>
             </div>
             <div class="cardMini">
-              <span class="miniText" data-role="miniRest">Preencha os dados</span>
+              <span class="cardCountdown" data-role="miniRest"><span class="clockMain">--:--:--</span><small class="clockMs">.---</small></span>
               <span class="dot">•</span>
-              <span class="miniText" data-role="miniEnd">Sem previsão</span>
+              <span class="cardPrediction" data-role="miniEnd">Sem previsão</span>
             </div>
           </div>
         </div>
@@ -1477,9 +1489,9 @@
       const status = forecastReached ? "reached" : getOperationalStatus(restMin);
       const labels = {
         reached: ["Previsão atingida", "bad", "bad", "O horário previsto de encerramento foi atingido."],
-        now: ["Neste turno", "bad", "bad", "Vai encerrar neste turno."],
-        next: ["Próximo turno", "warn", "warn", "Vai encerrar no próximo turno."],
-        ok: ["Estável", "ok", "ok", "Não encerra no turno atual nem no próximo."]
+        now: ["Encerra neste turno", "bad", "bad", "Vai encerrar neste turno."],
+        next: ["Encerra no próximo turno", "warn", "warn", "Vai encerrar no próximo turno."],
+        ok: ["Não encerra", "ok", "ok", "Não encerra no turno atual nem no próximo."]
       };
       const [statusText, badgeClass, noticeClass, noticeTitle] = labels[status];
 
@@ -1559,7 +1571,6 @@
       node.classList.toggle("emptyMachine", isEmpty);
       node.classList.toggle("collapsed", !!machine.collapsed);
 
-      node.querySelector('[data-role="titleMachine"]').textContent = machine.machine || '-';
       node.querySelector('[data-role="machineToken"]').textContent = machine.machine || '--';
       applyDynamicCard(node, machine, calc);
 
@@ -1606,11 +1617,13 @@
       const miniRest = root.querySelector('[data-role="miniRest"]');
       const miniEnd = root.querySelector('[data-role="miniEnd"]');
       if (calc.valid && calc.endDT) {
-        miniRest.textContent = calc.status === "reached" ? "Previsão atingida" : `${formatCountdownShort(calc.restMs)} restantes`;
-        miniEnd.textContent = `previsão fixa ${fmtDate(calc.endDT)} às ${fmtTime(calc.endDT)}`;
+        const parts = formatCountdownParts(calc.restMs);
+        miniRest.innerHTML = `<span class="clockMain">${parts.clock}</span><small class="clockMs">.${parts.milliseconds}</small>`;
+        miniRest.setAttribute("aria-label", `${parts.clock}.${parts.milliseconds} restantes`);
+        miniEnd.textContent = `Previsão ${fmtDate(calc.endDT)} às ${fmtTime(calc.endDT)}`;
       } else {
-        miniRest.textContent = "Preencha os dados da máquina";
-        miniEnd.textContent = "Sem previsão calculada";
+        miniRest.innerHTML = `<span class="clockMain">--:--:--</span><small class="clockMs">.---</small>`;
+        miniEnd.textContent = "";
       }
 
       updateCountdownDisplay(root, calc);
@@ -1669,7 +1682,11 @@
       input.addEventListener("change", () => {
         machine[field] = input.value;
         clearTimeout(liveRenderTimer);
-        render();
+        saveState();
+        const calc = calcMachine(machine);
+        applyDynamicCard(root, machine, calc);
+        const preview = root.querySelector('[data-role="mpPreview"]');
+        if (preview) preview.textContent = `Capacidade com MP: ${calc.capacity} ${plural(calc.capacity, "peça", "peças")} · ${calc.perBar} por barra`;
       });
     }
 
@@ -1723,7 +1740,8 @@
         });
         input.addEventListener("change", () => {
           machine.trays[index] = input.value;
-          render();
+          saveState();
+          applyDynamicCard(root, machine, calcMachine(machine));
         });
 
         const del = document.createElement("button");
