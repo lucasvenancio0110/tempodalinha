@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/runner/work/tempodalinha/tempodalinha/scripts/apply_v94.py", line 85, in <module>
+    one(
+  File "/home/runner/work/tempodalinha/tempodalinha/scripts/apply_v94.py", line 13, in one
+    raise RuntimeError(f'{label}: esperado 1, encontrado {count}')
+RuntimeError: migração início: esperado 1, encontrado 0
