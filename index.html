@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07141c">
-  <title>Tempo da Linha | VENANC Tools V9</title>
+  <title>Tempo da Linha | VENANC Tools V9.1</title>
   <style>
     :root {
       --bg: #0b1117;
@@ -1557,7 +1557,7 @@
       node.dataset.id = machine.id;
       const isEmpty = !String(machine.timeInput || "").trim() && !String(machine.target || "").trim() && !String(machine.pieceLength || "").trim();
       node.classList.toggle("emptyMachine", isEmpty);
-      node.classList.toggle("collapsed", isEmpty || !!machine.collapsed);
+      node.classList.toggle("collapsed", !!machine.collapsed);
 
       node.querySelector('[data-role="titleMachine"]').textContent = machine.machine || '-';
       node.querySelector('[data-role="machineToken"]').textContent = machine.machine || '--';
