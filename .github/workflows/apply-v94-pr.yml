@@ -1,0 +1,55 @@
+name: Apply V9.4
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply V9.4
+        run: python scripts/apply_v94.py
+
+      - name: Validate JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
+          if not scripts:
+              raise SystemExit('Script principal não encontrado')
+          Path('/tmp/app.js').write_text(scripts[-1], encoding='utf-8')
+          PY
+          node --check /tmp/app.js
+
+      - name: Validate changes
+        run: |
+          grep -Fq '<title>Tempo da Linha | VENANC Tools V9.4</title>' index.html
+          ! grep -A4 -F '.appHeader {' index.html | grep -Fq 'position: sticky;'
+          grep -Fq 'data-action="clearMachine"' index.html
+          grep -Fq 'calculationStartedAt: null' index.html
+          grep -Fq 'machine.calculationStartedAt = Date.now()' index.html
+          grep -Fq 'String(date.getMilliseconds()).padStart(3, "0")' index.html
+
+      - name: Commit V9.4
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'V9.4 already applied.'
+            exit 0
+          fi
+          git commit -m 'feat: cabeçalho normal, limpar dados e horário exato do cálculo'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
