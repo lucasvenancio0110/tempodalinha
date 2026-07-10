@@ -24,13 +24,15 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           p = Path('index.html')
-          text = p.read_text(encoding='utf-8')
+          raw = p.read_bytes()
+          text = raw.decode('utf-8').replace('\r\n', '\n').replace('\r', '\n')
           old = '"05": [69,72,83,85,87,88,89,90,91,92,93,94,95],'
           new = '"05": [95,94,93,92,91,90,89,88,87,85,83,72,69],'
-          if text.count(old) != 1:
-              raise SystemExit(f'Lista antiga da Célula 05 não encontrada exatamente uma vez: {text.count(old)}')
-          text = text.replace(old, new, 1)
-          p.write_text(text, encoding='utf-8')
+          if old in text:
+              text = text.replace(old, new, 1)
+          if text.count(new) != 1:
+              raise SystemExit(f'Lista final da Célula 05 inválida: {text.count(new)}')
+          p.write_bytes(text.replace('\n', '\r\n').encode('utf-8'))
           PY
 
       - name: Validate
@@ -44,5 +46,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
+          if git diff --cached --quiet; then
+            echo 'No changes.'
+            exit 0
+          fi
           git commit -m 'fix: inverter ordem da Célula 05'
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
