@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07141c">
-  <title>Tempo da Linha | VENANC Tools V11.0.01</title>
+  <title>Tempo da Linha | VENANC Tools V11.0.02</title>
   <style>
     :root {
       --bg: #0b1117;
@@ -2366,16 +2366,16 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
         <section class="machineView operatorForm">
           <div class="operatorIntro"><div><span>Modo operador</span><strong>Preenchimento rápido</strong></div><span class="operatorModePill">ORDEM DA MÁQUINA</span></div>
           <div class="operatorGrid">
-            <div class="operatorField cycleField"><label>1. Ciclo</label><input class="operatorInput" data-v10-field="timeInput" inputmode="decimal" value="${escapeHtml(String(machine.timeInput ?? ""))}" placeholder="2,24"></div>
-            <div class="operatorField"><label>2. ${piecesLabel}</label><input class="operatorInput" data-v10-field="materialRemaining" inputmode="decimal" value="${escapeHtml(String(piecesValue ?? ""))}" placeholder="0">
+            <div class="operatorField cycleField"><label>1. Ciclo</label><input class="operatorInput" data-v10-field="timeInput" inputmode="decimal" value="${escapeHtml(String(machine.timeInput ?? ""))}" placeholder="2,24" enterkeyhint="next"></div>
+            <div class="operatorField"><label>2. ${piecesLabel}</label><input class="operatorInput" data-v10-field="materialRemaining" inputmode="decimal" value="${escapeHtml(String(piecesValue ?? ""))}" placeholder="0" enterkeyhint="next">
               <div class="mpModeTabs">
                 <button class="mpModeTab ${machine.barMode === "pieces" ? "active" : ""}" data-v10-action="mp-mode" data-value="pieces" type="button">PEÇAS</button>
                 <button class="mpModeTab ${machine.barMode === "partialMm" ? "active" : ""}" data-v10-action="mp-mode" data-value="partialMm" type="button">MM</button>
                 <button class="mpModeTab ${machine.barMode === "full" ? "active" : ""}" data-v10-action="mp-mode" data-value="full" type="button">CHEIA</button>
               </div>
             </div>
-            <div class="operatorField"><label>3. Meta da OP</label><input class="operatorInput" data-v10-field="target" inputmode="numeric" value="${escapeHtml(String(machine.target ?? ""))}" placeholder="1000"></div>
-            <div class="operatorField"><label>4. Peça (mm)</label><input class="operatorInput" data-v10-field="pieceLength" inputmode="decimal" value="${escapeHtml(String(machine.pieceLength ?? ""))}" placeholder="32"></div>
+            <div class="operatorField"><label>3. Meta da OP</label><input class="operatorInput" data-v10-field="target" inputmode="numeric" value="${escapeHtml(String(machine.target ?? ""))}" placeholder="1000" enterkeyhint="next"></div>
+            <div class="operatorField"><label>4. Peça (mm)</label><input class="operatorInput" data-v10-field="pieceLength" inputmode="decimal" value="${escapeHtml(String(machine.pieceLength ?? ""))}" placeholder="32" enterkeyhint="done"></div>
             <div class="operatorField"><label>5. Barras</label><div class="barCounter"><button type="button" data-v10-action="bar-minus">−</button><strong data-v10-role="bar-count">${parseInteger(machine.fullBars)}</strong><button type="button" data-v10-action="bar-plus">＋</button></div></div>
             <details class="optionalPanel" ${machine.traysCollapsed === false ? "open" : ""}><summary>Opcionais — turnos passados e gabaritos <b>${trayCount}</b></summary><div class="optionalBody"><div class="pastProductionCompact"><label>Produção dos turnos passados</label><input type="number" min="0" step="1" inputmode="numeric" data-v10-field="producedManual" value="${escapeHtml(String(machine.producedManual ?? ""))}" placeholder="0"></div>${trays}<button class="addTrayCompact" data-v10-action="add-tray" type="button">Adicionar gabarito</button></div></details>
           </div>
@@ -2766,13 +2766,8 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       document.addEventListener("touchmove", event => {
         if (event.touches && event.touches.length > 1) event.preventDefault();
       }, { passive: false });
-      document.addEventListener("dblclick", event => event.preventDefault(), { passive: false });
-      let lastTouchEnd = 0;
-      document.addEventListener("touchend", event => {
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) event.preventDefault();
-        lastTouchEnd = now;
-      }, { passive: false });
+      // Não bloqueia dblclick/touchend: isso impedia o primeiro toque nos campos do iPhone.
+      // O zoom por pinça continua bloqueado pelas gestures e pelo touchmove com múltiplos dedos.
     }
 
     blockIOSZoom();
@@ -2782,7 +2777,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
     setInterval(refreshLiveRemaining, 50);
   
 
-    /* V11.0.01 — operações, resultados e preset em 16 horas */
+    /* V11.0.02 — foco imediato e digitação fluida no iPhone */
     function trayTotalV11(machine) {
       return (Array.isArray(machine.trays) ? machine.trays : []).reduce((sum, value) => sum + Math.max(0, parseInteger(value)), 0);
     }
@@ -2949,7 +2944,10 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
     }
 
     function bindMachineScreenEvents(machine) {
-      machineScreenContent.querySelectorAll('[data-v10-field]').forEach(input => {
+      const mainInputs = [...machineScreenContent.querySelectorAll('[data-v10-field]')];
+      mainInputs.forEach((input, index) => {
+        input.addEventListener('pointerdown', event => event.stopPropagation());
+        input.addEventListener('click', event => event.stopPropagation());
         input.addEventListener('input', () => {
           const field = input.dataset.v10Field;
           if (field === 'materialRemaining') {
@@ -2958,11 +2956,34 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
           saveState();
         });
         input.addEventListener('change', () => { ensureExactStart(machine); saveState(); });
+        input.addEventListener('keydown', event => {
+          if (event.key !== 'Enter') return;
+          event.preventDefault();
+          const next = mainInputs.slice(index + 1).find(node => !node.readOnly && !node.disabled && node.offsetParent !== null);
+          if (next) next.focus({ preventScroll:false }); else input.blur();
+        });
       });
       machineScreen.querySelectorAll('[data-v10-action]').forEach(button => { button.onclick = () => handleMachineScreenAction(button, machine); });
       machineScreenContent.querySelectorAll('[data-v10-tray]').forEach(input => {
-        input.addEventListener('input', () => { machine.trays[Number(input.dataset.v10Tray)] = input.value; syncPastProductionV11(machine); saveState(); });
-        input.addEventListener('change', () => { syncPastProductionV11(machine); saveState(); renderMachineScreen(); });
+        input.addEventListener('pointerdown', event => event.stopPropagation());
+        input.addEventListener('click', event => event.stopPropagation());
+        input.addEventListener('input', () => {
+          machine.trays[Number(input.dataset.v10Tray)] = input.value;
+          const total = syncPastProductionV11(machine);
+          saveState();
+          const totalNode = machineScreenContent.querySelector('.trayTotalV11 strong');
+          const summaryNode = machineScreenContent.querySelector('.optionalPanel summary b');
+          if (totalNode) totalNode.textContent = String(total);
+          if (summaryNode) summaryNode.textContent = String(total);
+        });
+        input.addEventListener('change', () => { syncPastProductionV11(machine); ensureExactStart(machine); saveState(); });
+        input.addEventListener('keydown', event => {
+          if (event.key !== 'Enter') return;
+          event.preventDefault();
+          const trayInputs = [...machineScreenContent.querySelectorAll('[data-v10-tray]')];
+          const next = trayInputs[trayInputs.indexOf(input) + 1];
+          if (next) next.focus({ preventScroll:false }); else input.blur();
+        });
       });
       const details = machineScreenContent.querySelector('.optionalPanel');
       details?.addEventListener('toggle', () => { machine.traysCollapsed = !details.open; saveState(); });
@@ -2977,7 +2998,14 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       if (action === 'clear') { if (!window.confirm(`Limpar os dados da TNL ${formatTnl(machine.machine)}?\n\nA máquina continuará na célula.`)) return; clearMachineData(machine); saveState(); render(); machineScreenMode='edit'; return renderMachineScreen(); }
       if (action === 'bar-minus' || action === 'bar-plus') { machine.fullBars = Math.max(0, parseInteger(machine.fullBars) + (action === 'bar-plus' ? 1 : -1)); saveState(); return renderMachineScreen(); }
       if (action === 'mp-mode') { machine.barMode = button.dataset.value; saveState(); return renderMachineScreen(); }
-      if (action === 'add-tray') { machine.trays.push(''); machine.traysCollapsed=false; saveState(); return renderMachineScreen(); }
+      if (action === 'add-tray') {
+        machine.trays.push(''); machine.traysCollapsed=false; saveState(); renderMachineScreen();
+        requestAnimationFrame(() => {
+          const inputs = machineScreenContent.querySelectorAll('[data-v10-tray]');
+          inputs[inputs.length - 1]?.focus({ preventScroll:false });
+        });
+        return;
+      }
       if (action === 'remove-tray') { machine.trays.splice(Number(button.dataset.index),1); if(!machine.trays.length) machine.trays=['']; syncPastProductionV11(machine); saveState(); return renderMachineScreen(); }
       if (action === 'preset-mode') { machine.presetMode = button.dataset.value; saveState(); return renderMachineScreen(); }
     }
