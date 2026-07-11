@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07141c">
-  <title>Tempo da Linha | VENANC Tools V11.0.03</title>
+  <title>Tempo da Linha | VENANC Tools V11.0.04</title>
   <style>
     :root {
       --bg: #0b1117;
@@ -1990,6 +1990,9 @@
     }
 
     function refreshLiveRemaining() {
+      // Durante o preenchimento não atualiza a página atrás do popup.
+      // Isso evita reconstruções e cálculos concorrendo com o toque nos inputs.
+      if (typeof machineScreen !== "undefined" && machineScreen?.open && machineScreenMode === "edit") return;
       const calcs = [];
       const cardsById = new Map(
         [...document.querySelectorAll(".machineCard")].map(card => [card.dataset.id, card])
@@ -2318,7 +2321,6 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       document.body.classList.add("machine-screen-open");
       requestAnimationFrame(() => {
         machineQueue.querySelector('.queueMachine.is-active')?.scrollIntoView({ behavior:"smooth", inline:"center", block:"nearest" });
-        if (machineScreenMode === "edit") machineScreenContent.querySelector('[data-v10-field="timeInput"]')?.focus({ preventScroll:true });
       });
     }
 
@@ -2782,7 +2784,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
     renderCellSelector();
     updateLiveClock();
     setInterval(updateLiveClock, 1000);
-    setInterval(refreshLiveRemaining, 50);
+    setInterval(refreshLiveRemaining, 250);
   
 
     /* V11.0.02 — foco imediato e digitação fluida no iPhone */
@@ -2848,16 +2850,23 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       }
       const row = document.querySelector('#v11MachineProgress');
       if (row) {
-        row.innerHTML = '';
-        state.machines.forEach((machine, index) => {
-          const button = document.createElement('button');
+        const signature = state.machines.map((machine, index) => {
           const calc = calcs[index];
-          button.type = 'button';
-          button.className = `cellMachineDotV11 ${calc.valid ? 'done' : ''} ${presetPendingV11(machine, calc) ? 'attention' : ''}`.trim();
-          button.textContent = formatTnl(machine.machine);
-          button.addEventListener('click', () => openMachineScreen(machine.id));
-          row.appendChild(button);
-        });
+          return `${machine.id}:${calc.valid ? 1 : 0}:${presetPendingV11(machine, calc) ? 1 : 0}`;
+        }).join('|');
+        if (row.dataset.signature !== signature) {
+          row.dataset.signature = signature;
+          row.innerHTML = '';
+          state.machines.forEach((machine, index) => {
+            const button = document.createElement('button');
+            const calc = calcs[index];
+            button.type = 'button';
+            button.className = `cellMachineDotV11 ${calc.valid ? 'done' : ''} ${presetPendingV11(machine, calc) ? 'attention' : ''}`.trim();
+            button.textContent = formatTnl(machine.machine);
+            button.addEventListener('click', () => openMachineScreen(machine.id));
+            row.appendChild(button);
+          });
+        }
       }
     }
 
@@ -2953,14 +2962,6 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
 
     function bindMachineScreenEvents(machine) {
       const mainInputs = [...machineScreenContent.querySelectorAll('[data-v10-field]')];
-      machineScreenContent.querySelectorAll('.operatorField').forEach(fieldBox => {
-        const editable = fieldBox.querySelector('.operatorInput:not([readonly]):not([disabled])');
-        if (!editable) return;
-        fieldBox.addEventListener('click', event => {
-          if (event.target.closest('button, select, input') && event.target !== editable) return;
-          if (document.activeElement !== editable) editable.focus({ preventScroll:false });
-        });
-      });
       mainInputs.forEach((input, index) => {
         input.addEventListener('input', () => {
           const field = input.dataset.v10Field;
