@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/runner/work/tempodalinha/tempodalinha/scripts/apply_v94.py", line 17, in <module>
+    one('<title>Tempo da Linha | VENANC Tools V9.2</title>', '<title>Tempo da Linha | VENANC Tools V9.4</title>', 'versão')
+  File "/home/runner/work/tempodalinha/tempodalinha/scripts/apply_v94.py", line 13, in one
+    raise RuntimeError(f'{label}: esperado 1, encontrado {count}')
+RuntimeError: versão: esperado 1, encontrado 0
