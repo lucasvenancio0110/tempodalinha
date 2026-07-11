@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "/home/runner/work/tempodalinha/tempodalinha/scripts/apply_v11_0_02.py", line 10, in <module>
-    if n != 1: raise RuntimeError(f'versão: {n}')
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-RuntimeError: versão: 0
