@@ -1,1 +1,2 @@
 Apply V11.0.03 touch fix.
+Run native input focus validation.
