@@ -55,13 +55,26 @@ jobs:
 
       - name: Validate changes
         run: |
-          grep -Fq '<title>Tempo da Linha | VENANC Tools V9.4</title>' index.html
-          ! grep -A4 -F '.appHeader {' index.html | grep -Fq 'position: sticky;'
-          grep -Fq 'data-action="clearMachine"' index.html
-          grep -Fq 'calculationStartedAt: null' index.html
-          grep -Fq 'machine.calculationStartedAt = exactStart' index.html
-          grep -Fq 'machine.baseTimestamp = exactStart' index.html
-          grep -Fq 'String(date.getMilliseconds()).padStart(3, "0")' index.html
+          python - <<'PY'
+          from pathlib import Path
+          html = Path('index.html').read_text(encoding='utf-8')
+          required = {
+            'versão V9.4': '<title>Tempo da Linha | VENANC Tools V9.4</title>',
+            'botão limpar': 'data-action="clearMachine"',
+            'função limpar': 'function clearMachineData(machine)',
+            'campo de início': 'calculationStartedAt: null',
+            'registro exato': 'machine.calculationStartedAt = exactStart',
+            'base alinhada': 'machine.baseTimestamp = exactStart',
+            'milissegundos': 'String(date.getMilliseconds()).padStart(3, "0")',
+            'cabeçalho relativo': '.appHeader {\n      position: relative;',
+          }
+          missing = [name for name, token in required.items() if token not in html]
+          if missing:
+              raise SystemExit('Validações ausentes: ' + ', '.join(missing))
+          if '.appHeader {\n      position: sticky;' in html:
+              raise SystemExit('Cabeçalho principal ainda está sticky')
+          print('Validação estrutural aprovada.')
+          PY
 
       - name: Commit V9.4
         run: |
