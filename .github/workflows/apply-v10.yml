@@ -1,0 +1,62 @@
+name: Apply V10 cockpit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - TRIGGER_V10.txt
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply V10
+        run: python scripts/apply_v10.py
+
+      - name: Validate JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
+          if not scripts:
+              raise SystemExit('Script principal não encontrado')
+          Path('/tmp/app.js').write_text(scripts[-1], encoding='utf-8')
+          PY
+          node --check /tmp/app.js
+
+      - name: Validate V10 structure
+        run: |
+          grep -Fq '<title>Tempo da Linha | VENANC Tools V10</title>' index.html
+          grep -Fq 'id="machineScreen"' index.html
+          grep -Fq 'function openMachineScreen(machineId' index.html
+          grep -Fq 'function estimatedShiftProduction(machine, calc' index.html
+          grep -Fq 'Turnos passados' index.html
+          grep -Fq 'Estimada do turno' index.html
+          grep -Fq 'Produção por turno' index.html
+          grep -Fq 'Salvar e próxima' index.html
+          grep -Fq 'Gabaritos — opcional' index.html
+          grep -Fq 'prefers-reduced-motion' index.html
+          git diff --check
+
+      - name: Commit V10
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'V10 already applied.'
+            exit 0
+          fi
+          git commit -m 'feat: transformar máquinas em cockpit V10'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
