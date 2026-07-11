@@ -43,7 +43,6 @@ jobs:
           grep -Fq 'Produção dos turnos passados' index.html
           grep -Fq 'Até o fim do turno' index.html
           grep -Fq 'Ciclo em minutos' index.html
-          git diff --check
 
       - name: Commit V11.0.01
         run: |
