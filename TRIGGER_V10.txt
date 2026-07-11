@@ -1,2 +1,3 @@
 Apply the V10 full-screen machine cockpit.
 Retry with simplified validation.
+Include past-shift production in the optional panel.
