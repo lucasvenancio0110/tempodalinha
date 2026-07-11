@@ -19,7 +19,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
-      - name: Apply V10
+      - name: Apply V10 and assert structure
         run: python scripts/apply_v10.py
 
       - name: Validate JavaScript syntax
@@ -34,20 +34,6 @@ jobs:
           Path('/tmp/app.js').write_text(scripts[-1], encoding='utf-8')
           PY
           node --check /tmp/app.js
-
-      - name: Validate V10 structure
-        run: |
-          grep -Fq '<title>Tempo da Linha | VENANC Tools V10</title>' index.html
-          grep -Fq 'id="machineScreen"' index.html
-          grep -Fq 'function openMachineScreen(machineId' index.html
-          grep -Fq 'function estimatedShiftProduction(machine, calc' index.html
-          grep -Fq 'Turnos passados' index.html
-          grep -Fq 'Estimada do turno' index.html
-          grep -Fq 'Produção por turno' index.html
-          grep -Fq 'Salvar e próxima' index.html
-          grep -Fq 'Gabaritos — opcional' index.html
-          grep -Fq 'prefers-reduced-motion' index.html
-          git diff --check
 
       - name: Commit V10
         run: |
