@@ -5,3 +5,4 @@ Final retry with corrected state migration and exact start timestamp.
 Run diagnostic workflow with full error capture.
 Run robust final validation.
 Run final apply with script assertions and JavaScript syntax check.
+Finalize commit after successful validation.
