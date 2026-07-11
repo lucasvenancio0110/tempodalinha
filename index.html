@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07141c">
-  <title>Tempo da Linha | VENANC Tools V11.0.02</title>
+  <title>Tempo da Linha | VENANC Tools V11.0.03</title>
   <style>
     :root {
       --bg: #0b1117;
@@ -877,6 +877,14 @@
       font-size:clamp(24px,6vw,34px); font-weight:950; letter-spacing:-.055em; font-variant-numeric:tabular-nums;
     }
     .operatorInput:focus { border-bottom-color:#56d5c7; box-shadow:0 7px 0 -6px rgba(86,213,199,.55); }
+    /* V11.0.03 — toque nativo e área inteira focável no iPhone */
+    .operatorField { position:relative; touch-action:manipulation; }
+    .operatorField label { pointer-events:none; }
+    .operatorInput {
+      position:relative; z-index:3; pointer-events:auto !important;
+      touch-action:manipulation; -webkit-user-select:text; user-select:text;
+    }
+
     .mpModeTabs { display:flex; gap:5px; margin-top:7px; }
     .mpModeTab { flex:1; min-height:25px; border:1px solid rgba(255,255,255,.08); border-radius:8px; color:#829ca3; background:rgba(255,255,255,.025); font-size:8px; font-weight:900; }
     .mpModeTab.active { color:#062824; background:#56d5c7; border-color:#56d5c7; }
@@ -2945,9 +2953,15 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
 
     function bindMachineScreenEvents(machine) {
       const mainInputs = [...machineScreenContent.querySelectorAll('[data-v10-field]')];
+      machineScreenContent.querySelectorAll('.operatorField').forEach(fieldBox => {
+        const editable = fieldBox.querySelector('.operatorInput:not([readonly]):not([disabled])');
+        if (!editable) return;
+        fieldBox.addEventListener('click', event => {
+          if (event.target.closest('button, select, input') && event.target !== editable) return;
+          if (document.activeElement !== editable) editable.focus({ preventScroll:false });
+        });
+      });
       mainInputs.forEach((input, index) => {
-        input.addEventListener('pointerdown', event => event.stopPropagation());
-        input.addEventListener('click', event => event.stopPropagation());
         input.addEventListener('input', () => {
           const field = input.dataset.v10Field;
           if (field === 'materialRemaining') {
@@ -2965,8 +2979,6 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       });
       machineScreen.querySelectorAll('[data-v10-action]').forEach(button => { button.onclick = () => handleMachineScreenAction(button, machine); });
       machineScreenContent.querySelectorAll('[data-v10-tray]').forEach(input => {
-        input.addEventListener('pointerdown', event => event.stopPropagation());
-        input.addEventListener('click', event => event.stopPropagation());
         input.addEventListener('input', () => {
           machine.trays[Number(input.dataset.v10Tray)] = input.value;
           const total = syncPastProductionV11(machine);
