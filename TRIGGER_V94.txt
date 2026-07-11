@@ -3,3 +3,4 @@ Retry after matching current V9.2 structure.
 Write exact apply error if it fails.
 Final retry with corrected state migration and exact start timestamp.
 Run diagnostic workflow with full error capture.
+Run robust final validation.
