@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07141c">
-  <title>Tempo da Linha | VENANC Tools V9.2</title>
+  <title>Tempo da Linha | VENANC Tools V9.4</title>
   <style>
     :root {
       --bg: #0b1117;
@@ -119,9 +119,8 @@
     .machineCard:not(.emptyMachine) .cardIdentity { min-width:0; }
 
     .appHeader {
-      position: sticky;
-      top: 0;
-      z-index: 50;
+      position: relative;
+      z-index: 1;
       border-bottom: 1px solid var(--line-dark);
       background: rgba(8, 14, 19, .92);
       backdrop-filter: blur(16px);
@@ -178,6 +177,27 @@
     .btnLight { color: var(--ink); background: #fff; border-color: var(--line); }
     .btnLight:hover { background: #f5fafb; border-color: #c9d9de; }
     .btnDanger { color: var(--bad); background: var(--bad-bg); border-color: #ffd3d6; }
+    .calculationStartBox {
+      margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border:1px solid #d9e5e8; border-radius:14px; padding:12px 14px;
+      background:linear-gradient(145deg,#f8fbfc,#eef7f6);
+    }
+    .calculationStartBox span { color:#687b84; font-size:11px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+    .calculationStartBox strong { color:#18343c; font-size:13px; font-weight:950; text-align:right; font-variant-numeric:tabular-nums; }
+    .machineDangerZone {
+      margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:14px;
+      border:1px solid #f0d4d7; border-radius:15px; padding:13px 14px;
+      background:linear-gradient(145deg,#fffafa,#fff3f4);
+    }
+    .machineDangerZone strong { display:block; color:#6e2229; font-size:14px; }
+    .machineDangerZone span { display:block; margin-top:4px; color:#93656a; font-size:11px; font-weight:750; line-height:1.35; }
+    .clearMachineBtn { flex:0 0 auto; min-height:44px; }
+    @media (max-width:620px) {
+      .calculationStartBox { align-items:flex-start; flex-direction:column; }
+      .calculationStartBox strong { text-align:left; }
+      .machineDangerZone { align-items:stretch; flex-direction:column; }
+      .clearMachineBtn { width:100%; }
+    }
     .iconBtn {
       width: 38px;
       height: 38px;
@@ -981,6 +1001,11 @@
           </div>
         </div>
 
+        <div class="calculationStartBox">
+          <span>Cálculo iniciado</span>
+          <strong data-role="calculationStartedAt">Ainda não iniciado</strong>
+        </div>
+
         <div class="projectionCard" data-role="projectionCard">
           <div class="projectionTop">
             <div>
@@ -1012,6 +1037,14 @@
             <div class="projectionStat"><span>Saldo OP</span><strong data-role="projectionRemaining">0</strong></div>
             <div class="projectionStat"><span>MP</span><strong data-role="projectionCapacity">0</strong></div>
           </div>
+        </div>
+
+        <div class="machineDangerZone">
+          <div>
+            <strong>Reiniciar esta máquina</strong>
+            <span>Apaga os dados preenchidos e mantém a TNL na célula.</span>
+          </div>
+          <button class="btn btnDanger clearMachineBtn" data-action="clearMachine" type="button">🗑 Limpar dados</button>
         </div>
 
         <div class="section requestBox" data-role="requestBox">
@@ -1091,6 +1124,7 @@
     const DEFAULT_MACHINE = (baseTimestamp = Date.now()) => ({
       id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
       baseTimestamp,
+      calculationStartedAt: null,
       machine: "",
       timeInput: "",
       pieceLength: "",
@@ -1172,6 +1206,9 @@
         ...DEFAULT_MACHINE(baseTimestamp),
         ...machine,
         baseTimestamp,
+        calculationStartedAt: Number.isFinite(Number(machine && machine.calculationStartedAt))
+          ? Number(machine.calculationStartedAt)
+          : null,
         trays: Array.isArray(machine.trays) && machine.trays.length ? machine.trays : [""],
         traysCollapsed: machine.traysCollapsed !== false
       };
@@ -1237,6 +1274,12 @@
     function fmtTime(d) {
       if (!d) return "-";
       return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+
+    function fmtExactDateTime(timestamp) {
+      const date = new Date(timestamp);
+      if (!Number.isFinite(date.getTime())) return "Ainda não iniciado";
+      return `${fmtDate(date)} às ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}.${String(date.getMilliseconds()).padStart(3, "0")}`;
     }
 
     function plural(n, one, many) {
@@ -1555,7 +1598,14 @@
       el.empty.classList.toggle("visible", state.machines.length === 0);
       const calcs = [];
       state.machines.forEach(machine => {
-        const calc = calcMachine(machine);
+        let calc = calcMachine(machine);
+        if (calc.valid && !machine.calculationStartedAt) {
+          const preservedStart = Number(machine.baseTimestamp);
+          machine.calculationStartedAt = Number.isFinite(preservedStart) && preservedStart > 0
+            ? preservedStart
+            : Date.now();
+          calc = calcMachine(machine);
+        }
         calcs.push(calc);
         el.cards.appendChild(renderCard(machine, calc));
       });
@@ -1573,6 +1623,8 @@
 
       node.querySelector('[data-role="machineToken"]').textContent = machine.machine || '--';
       applyDynamicCard(node, machine, calc);
+      const calculationStartedAt = node.querySelector('[data-role="calculationStartedAt"]');
+      if (calculationStartedAt) calculationStartedAt.textContent = fmtExactDateTime(machine.calculationStartedAt);
 
       bindField(node, machine, "timeInput");
       bindField(node, machine, "pieceLength");
@@ -1683,7 +1735,16 @@
         machine[field] = input.value;
         clearTimeout(liveRenderTimer);
         saveState();
-        const calc = calcMachine(machine);
+        let calc = calcMachine(machine);
+        if (calc.valid && !machine.calculationStartedAt) {
+          const exactStart = Date.now();
+          machine.calculationStartedAt = exactStart;
+          machine.baseTimestamp = exactStart;
+          calc = calcMachine(machine);
+          saveState();
+        }
+        const calculationStartedAt = root.querySelector('[data-role="calculationStartedAt"]');
+        if (calculationStartedAt) calculationStartedAt.textContent = fmtExactDateTime(machine.calculationStartedAt);
         applyDynamicCard(root, machine, calc);
         const preview = root.querySelector('[data-role="mpPreview"]');
         if (preview) preview.textContent = `Capacidade com MP: ${calc.capacity} ${plural(calc.capacity, "peça", "peças")} · ${calc.perBar} por barra`;
@@ -1855,6 +1916,18 @@
       }
     }
 
+    function clearMachineData(machine) {
+      const preservedId = machine.id;
+      const preservedMachine = machine.machine;
+      const clean = DEFAULT_MACHINE(Date.now());
+      Object.assign(machine, clean, {
+        id: preservedId,
+        machine: preservedMachine,
+        calculationStartedAt: null,
+        collapsed: true
+      });
+    }
+
     function bindActions(root, machine) {
       root.querySelector('[data-action="toggle"]').addEventListener("click", () => {
         machine.collapsed = !machine.collapsed;
@@ -1862,6 +1935,17 @@
       });
       const removeButton = root.querySelector('[data-action="remove"]');
       if (removeButton) removeButton.style.display = "none";
+      const clearButton = root.querySelector('[data-action="clearMachine"]');
+      if (clearButton) clearButton.addEventListener("click", () => {
+        const label = `TNL ${formatTnl(machine.machine)}`;
+        const confirmed = window.confirm(`Limpar os dados da ${label}?
+
+Todos os dados preenchidos serão apagados. A máquina continuará na célula.`);
+        if (!confirmed) return;
+        clearMachineData(machine);
+        saveState();
+        render();
+      });
       root.querySelector('[data-action="minusBar"]').addEventListener("click", () => {
         machine.fullBars = Math.max(0, parseInteger(machine.fullBars) - 1);
         render();
