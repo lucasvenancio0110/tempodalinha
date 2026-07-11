@@ -20,7 +20,13 @@ jobs:
           fetch-depth: 0
 
       - name: Apply V10 and assert structure
-        run: python scripts/apply_v10.py
+        run: |
+          if grep -Fq '<title>Tempo da Linha | VENANC Tools V10</title>' index.html; then
+            echo 'Estrutura principal V10 já aplicada.'
+          else
+            python scripts/apply_v10.py
+          fi
+          python scripts/patch_v10_turnos.py
 
       - name: Validate JavaScript syntax
         run: |
@@ -44,5 +50,5 @@ jobs:
             echo 'V10 already applied.'
             exit 0
           fi
-          git commit -m 'feat: transformar máquinas em cockpit V10'
+          git commit -m 'feat: completar cockpit V10 com turnos passados'
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
