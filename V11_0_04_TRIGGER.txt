@@ -1,0 +1,1 @@
+Apply and validate the root touch/focus fix for V11.0.04.
