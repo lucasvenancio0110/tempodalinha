@@ -888,6 +888,12 @@
     .optionalPanel summary::-webkit-details-marker { display:none; }
     .optionalPanel summary b { color:#56d5c7; font-size:15px; }
     .optionalBody { max-height:118px; overflow:auto; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; padding:0 9px 9px; }
+    .pastProductionCompact {
+      grid-column:1/-1; display:grid; grid-template-columns:minmax(0,1fr) minmax(90px,.55fr); align-items:center; gap:8px;
+      border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:7px 9px; background:rgba(0,0,0,.10);
+    }
+    .pastProductionCompact label { color:#9eb3b8; font-size:8px; font-weight:950; letter-spacing:.08em; text-transform:uppercase; }
+    .pastProductionCompact input { min-width:0; height:34px; border:1px solid rgba(255,255,255,.10); border-radius:9px; padding:0 9px; color:#effafa; background:rgba(255,255,255,.045); font-size:18px; font-weight:900; text-align:right; }
     .trayCompactRow { display:grid; grid-template-columns:1fr 32px; gap:5px; }
     .trayCompactRow input { min-width:0; height:36px; border:1px solid rgba(255,255,255,.10); border-radius:9px; padding:0 9px; color:#effafa; background:rgba(255,255,255,.045); font-size:16px; font-weight:850; }
     .trayCompactRow button,.addTrayCompact { height:36px; border:1px solid rgba(255,255,255,.09); border-radius:9px; color:#b7cdcf; background:rgba(255,255,255,.04); font-weight:900; }
@@ -2267,7 +2273,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
             <div class="operatorField"><label>3. Meta da OP</label><input class="operatorInput" data-v10-field="target" inputmode="numeric" value="${escapeHtml(String(machine.target ?? ""))}" placeholder="1000"></div>
             <div class="operatorField"><label>4. Peça (mm)</label><input class="operatorInput" data-v10-field="pieceLength" inputmode="decimal" value="${escapeHtml(String(machine.pieceLength ?? ""))}" placeholder="32"></div>
             <div class="operatorField"><label>5. Barras</label><div class="barCounter"><button type="button" data-v10-action="bar-minus">−</button><strong data-v10-role="bar-count">${parseInteger(machine.fullBars)}</strong><button type="button" data-v10-action="bar-plus">＋</button></div></div>
-            <details class="optionalPanel" ${machine.traysCollapsed === false ? "open" : ""}><summary>Gabaritos — opcional <b>${trayCount}</b></summary><div class="optionalBody">${trays}<button class="addTrayCompact" data-v10-action="add-tray" type="button">Adicionar gabarito</button></div></details>
+            <details class="optionalPanel" ${machine.traysCollapsed === false ? "open" : ""}><summary>Opcionais — turnos passados e gabaritos <b>${trayCount}</b></summary><div class="optionalBody"><div class="pastProductionCompact"><label>Produção dos turnos passados</label><input type="number" min="0" step="1" inputmode="numeric" data-v10-field="producedManual" value="${escapeHtml(String(machine.producedManual ?? ""))}" placeholder="0"></div>${trays}<button class="addTrayCompact" data-v10-action="add-tray" type="button">Adicionar gabarito</button></div></details>
           </div>
         </section>`;
 
