@@ -6,13 +6,15 @@ raw = path.read_bytes()
 newline = '\r\n' if b'\r\n' in raw else '\n'
 text = raw.decode('utf-8').replace('\r\n','\n').replace('\r','\n')
 
-text, n = re.subn(r'<title>Tempo da Linha \| VENANC Tools V11\.0\.01</title>', '<title>Tempo da Linha | VENANC Tools V11.0.02</title>', text, count=1)
-if n != 1: raise RuntimeError(f'versão: {n}')
+if 'VENANC Tools V11.0.02' not in text:
+    text, n = re.subn(r'<title>Tempo da Linha \| VENANC Tools V11\.0\.01</title>', '<title>Tempo da Linha | VENANC Tools V11.0.02</title>', text, count=1)
+    if n != 1: raise RuntimeError(f'versão: {n}')
 
-pattern_touch = r'''\n\s*document\.addEventListener\("dblclick", event => event\.preventDefault\(\), \{ passive: false \}\);\n\s*let lastTouchEnd = 0;\n\s*document\.addEventListener\("touchend", event => \{\n\s*const now = Date\.now\(\);\n\s*if \(now - lastTouchEnd <= 300\) event\.preventDefault\(\);\n\s*lastTouchEnd = now;\n\s*\}, \{ passive: false \}\);'''
-replacement_touch = '''\n      // Não bloqueia dblclick/touchend: isso impedia o primeiro toque nos campos do iPhone.\n      // O zoom por pinça continua bloqueado pelas gestures e pelo touchmove com múltiplos dedos.'''
-text, n = re.subn(pattern_touch, replacement_touch, text, count=1)
-if n != 1: raise RuntimeError(f'bloqueio de toque: {n}')
+if 'Não bloqueia dblclick/touchend' not in text:
+    pattern_touch = r'''\n\s*document\.addEventListener\("dblclick", event => event\.preventDefault\(\), \{ passive: false \}\);\n\s*let lastTouchEnd = 0;\n\s*document\.addEventListener\("touchend", event => \{\n\s*const now = Date\.now\(\);\n\s*if \(now - lastTouchEnd <= 300\) event\.preventDefault\(\);\n\s*lastTouchEnd = now;\n\s*\}, \{ passive: false \}\);'''
+    replacement_touch = '''\n      // Não bloqueia dblclick/touchend: isso impedia o primeiro toque nos campos do iPhone.\n      // O zoom por pinça continua bloqueado pelas gestures e pelo touchmove com múltiplos dedos.'''
+    text, n = re.subn(pattern_touch, replacement_touch, text, count=1)
+    if n != 1: raise RuntimeError(f'bloqueio de toque: {n}')
 
 for field, hint in [('timeInput','next'),('materialRemaining','next'),('target','next'),('pieceLength','done')]:
     pattern = rf'(<input class="operatorInput" data-v10-field="{field}"[^>]*?)(>)'
@@ -22,10 +24,11 @@ for field, hint in [('timeInput','next'),('materialRemaining','next'),('target',
         replacement = match.group(1) + f' enterkeyhint="{hint}"' + match.group(2)
         text = text[:match.start()] + replacement + text[match.end():]
 
-start = text.rfind("    function bindMachineScreenEvents(machine) {")
-end = text.find("\n    function handleMachineScreenAction(button, machine) {", start)
-if start < 0 or end < 0: raise RuntimeError('bloco bind não encontrado')
-new_bind = '''    function bindMachineScreenEvents(machine) {
+if "const mainInputs = [...machineScreenContent.querySelectorAll('[data-v10-field]')];" not in text:
+    start = text.rfind("    function bindMachineScreenEvents(machine) {")
+    end = text.find("\n    function handleMachineScreenAction(button, machine) {", start)
+    if start < 0 or end < 0: raise RuntimeError('bloco bind não encontrado')
+    new_bind = '''    function bindMachineScreenEvents(machine) {
       const mainInputs = [...machineScreenContent.querySelectorAll('[data-v10-field]')];
       mainInputs.forEach((input, index) => {
         input.addEventListener('pointerdown', event => event.stopPropagation());
@@ -71,10 +74,11 @@ new_bind = '''    function bindMachineScreenEvents(machine) {
       details?.addEventListener('toggle', () => { machine.traysCollapsed = !details.open; saveState(); });
     }
 '''
-text = text[:start] + new_bind + text[end:]
+    text = text[:start] + new_bind + text[end:]
 
-old_add = "      if (action === 'add-tray') { machine.trays.push(''); machine.traysCollapsed=false; saveState(); return renderMachineScreen(); }"
-new_add = '''      if (action === 'add-tray') {
+if 'inputs[inputs.length - 1]?.focus' not in text:
+    old_add = "      if (action === 'add-tray') { machine.trays.push(''); machine.traysCollapsed=false; saveState(); return renderMachineScreen(); }"
+    new_add = '''      if (action === 'add-tray') {
         machine.trays.push(''); machine.traysCollapsed=false; saveState(); renderMachineScreen();
         requestAnimationFrame(() => {
           const inputs = machineScreenContent.querySelectorAll('[data-v10-tray]');
@@ -82,8 +86,8 @@ new_add = '''      if (action === 'add-tray') {
         });
         return;
       }'''
-if old_add not in text: raise RuntimeError('ação adicionar gabarito ausente')
-text = text.replace(old_add, new_add, 1)
+    if old_add not in text: raise RuntimeError('ação adicionar gabarito ausente')
+    text = text.replace(old_add, new_add, 1)
 
 text = text.replace('/* V11.0.01 — operações, resultados e preset em 16 horas */', '/* V11.0.02 — foco imediato e digitação fluida no iPhone */', 1)
 
