@@ -1,4 +1,0 @@
-Apply V11.0.02 touch and focus fixes.
-Retry with robust patching.
-Capture exact error.
-Run idempotent patch.
