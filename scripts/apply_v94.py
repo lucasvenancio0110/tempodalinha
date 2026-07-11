@@ -83,10 +83,14 @@ one(
     'campo início'
 )
 one(
-    '''        baseTimestamp,
+    '''        ...machine,
+        baseTimestamp,
         trays: Array.isArray(machine.trays) && machine.trays.length ? machine.trays : [""],''',
-    '''        baseTimestamp,
-        calculationStartedAt: Number.isFinite(Number(machine.calculationStartedAt)) ? Number(machine.calculationStartedAt) : null,
+    '''        ...machine,
+        baseTimestamp,
+        calculationStartedAt: Number.isFinite(Number(machine && machine.calculationStartedAt))
+          ? Number(machine.calculationStartedAt)
+          : null,
         trays: Array.isArray(machine.trays) && machine.trays.length ? machine.trays : [""],''',
     'migração início'
 )
@@ -119,17 +123,40 @@ one(
     'mostrar início'
 )
 one(
+    '''      state.machines.forEach(machine => {
+        const calc = calcMachine(machine);
+        calcs.push(calc);
+        el.cards.appendChild(renderCard(machine, calc));
+      });''',
+    '''      state.machines.forEach(machine => {
+        let calc = calcMachine(machine);
+        if (calc.valid && !machine.calculationStartedAt) {
+          const preservedStart = Number(machine.baseTimestamp);
+          machine.calculationStartedAt = Number.isFinite(preservedStart) && preservedStart > 0
+            ? preservedStart
+            : Date.now();
+          calc = calcMachine(machine);
+        }
+        calcs.push(calc);
+        el.cards.appendChild(renderCard(machine, calc));
+      });''',
+    'migração visual de cálculos existentes'
+)
+one(
     '''        const calc = calcMachine(machine);
         applyDynamicCard(root, machine, calc);''',
-    '''        const calc = calcMachine(machine);
+    '''        let calc = calcMachine(machine);
         if (calc.valid && !machine.calculationStartedAt) {
-          machine.calculationStartedAt = Date.now();
+          const exactStart = Date.now();
+          machine.calculationStartedAt = exactStart;
+          machine.baseTimestamp = exactStart;
+          calc = calcMachine(machine);
           saveState();
         }
         const calculationStartedAt = root.querySelector('[data-role="calculationStartedAt"]');
         if (calculationStartedAt) calculationStartedAt.textContent = fmtExactDateTime(machine.calculationStartedAt);
         applyDynamicCard(root, machine, calc);''',
-    'registrar início'
+    'registrar início exato'
 )
 one(
     '''    function bindActions(root, machine) {
@@ -176,7 +203,8 @@ required = [
     'calculationStartedAt: null',
     'data-role="calculationStartedAt"',
     'function fmtExactDateTime(timestamp)',
-    'machine.calculationStartedAt = Date.now()'
+    'machine.calculationStartedAt = exactStart',
+    'machine.baseTimestamp = exactStart'
 ]
 for token in required:
     if token not in text:
