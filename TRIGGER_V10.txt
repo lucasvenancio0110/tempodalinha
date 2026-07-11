@@ -1,1 +1,2 @@
 Apply the V10 full-screen machine cockpit.
+Retry with simplified validation.
