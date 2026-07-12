@@ -6,6 +6,7 @@ on:
     paths:
       - 'src/core/**'
       - 'src/storage/**'
+      - 'beta/**'
       - 'tests/**'
       - 'package.json'
       - '.github/workflows/pulse-beta-core.yml'
@@ -21,5 +22,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Testar motor, armazenamento e migração
+      - name: Validar sintaxe da interface
+        run: node --check beta/app.js
+      - name: Testar motor, armazenamento, migração e interface
         run: npm test
