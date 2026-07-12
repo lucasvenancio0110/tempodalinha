@@ -1,5 +1,6 @@
 import { calculateMachine } from '../src/core/calc-engine.js';
 import { createDefaultMachine, loadState, saveState } from '../src/storage/storage-engine.js';
+import { moveMachine, restoreMachineOrder, sanitizeSettings } from '../src/settings/settings-engine.js';
 
 const CELL_MACHINES={
   '01':[2,5,15,19,23,24,25,26,27,29,30,35,46,47,48],
@@ -39,69 +40,30 @@ function ensureCell(cellId){
 function persist(){state=saveState(localStorage,state);}
 function currentMachines(){return state.selectedCell?state.cells[state.selectedCell]||[]:[];}
 function getMachine(id){return currentMachines().find(machine=>machine.id===id)||null;}
-function machineInput(machine){
-  return {
-    cycle:machine.cycle,
-    target:machine.target,
-    trays:machine.trays,
-    pieceLength:machine.pieceLength,
-    fullBars:machine.fullBars,
-    currentBarMode:machine.currentBarMode,
-    currentBarValue:machine.currentBarValue,
-    barLength:state.settings.barLength,
-    kerfWidth:state.settings.kerfWidth,
-    presetLimitHours:state.settings.presetLimitHours
-  };
-}
-function calculate(machine,now=Date.now()){
-  return calculateMachine(machineInput(machine),{now,calculationStartedAt:machine.calculationStartedAt||now});
-}
-function ensureStarted(machine){
-  const result=calculate(machine);
-  if(result.valid&&!machine.calculationStartedAt){
-    const started=Date.now();
-    machine.calculationStartedAt=started;
-    machine.baseTimestamp=started;
-    persist();
-    return calculate(machine,started);
-  }
-  return result;
-}
+function machineInput(machine){return {cycle:machine.cycle,target:machine.target,trays:machine.trays,pieceLength:machine.pieceLength,fullBars:machine.fullBars,currentBarMode:machine.currentBarMode,currentBarValue:machine.currentBarValue,barLength:state.settings.barLength,kerfWidth:state.settings.kerfWidth,presetLimitHours:state.settings.presetLimitHours};}
+function calculate(machine,now=Date.now()){return calculateMachine(machineInput(machine),{now,calculationStartedAt:machine.calculationStartedAt||now});}
+function ensureStarted(machine){const result=calculate(machine);if(result.valid&&!machine.calculationStartedAt){const started=Date.now();machine.calculationStartedAt=started;machine.baseTimestamp=started;persist();return calculate(machine,started);}return result;}
 
-function render(){
-  clearInterval(timer);
-  if(!state.selectedCell)return renderCells();
-  renderDashboard();
-  timer=setInterval(refreshVisible,1000);
-}
+function render(){clearInterval(timer);if(!state.selectedCell)return renderCells();renderDashboard();timer=setInterval(refreshVisible,1000);}
 
 function renderCells(){
   app.innerHTML=`<main class="shell"><header class="topbar"><div class="brand"><div class="brandMark">P</div><div><strong>PULSE CNC</strong><small>1.0 Beta</small></div></div></header><h1 class="screenTitle">Selecione a célula</h1><div class="cellGrid">${Object.keys(CELL_MACHINES).map(cell=>`<button class="cellButton" data-cell="${cell}">Célula ${cell}</button>`).join('')}</div></main>`;
   app.querySelectorAll('[data-cell]').forEach(button=>button.onclick=()=>{ensureCell(button.dataset.cell);render();});
 }
 
-function statusFor(machine){const result=calculate(machine);return result.valid?result.status:{key:'neutral',label:'Sem cálculo'};}
 function renderDashboard(){
   const machines=currentMachines();
   const results=machines.map(machine=>calculate(machine));
   const calculated=results.filter(result=>result.valid).length;
   const red=results.filter(result=>result.valid&&result.status.key==='red').length;
   const orange=results.filter(result=>result.valid&&result.status.key==='orange').length;
-  app.innerHTML=`<main class="shell"><header class="topbar"><div class="brand"><div class="brandMark">P</div><div><strong>PULSE CNC</strong><small>Célula ${state.selectedCell}</small></div></div><button class="button" id="changeCell">Trocar</button></header><section class="summary"><div class="summaryCard"><span>Calculadas</span><strong>${calculated}/${machines.length}</strong></div><div class="summaryCard"><span>Neste turno</span><strong>${red}</strong></div><div class="summaryCard"><span>Próximo</span><strong>${orange}</strong></div></section><section class="machineGrid">${machines.map(machine=>{
-    const result=calculate(machine),status=result.valid?result.status:{key:'neutral',label:'Sem cálculo'};
-    return `<button class="machineCard status-${status.key}" data-machine="${esc(machine.id)}"><strong>${machineLabel(machine.machine)}</strong><span>${result.valid?formatClock(result.forecast.remainingMs):'Preencher dados'}</span><small>${status.label}</small></button>`;
-  }).join('')}</section></main>`;
+  app.innerHTML=`<main class="shell"><header class="topbar"><div class="brand"><div class="brandMark">P</div><div><strong>PULSE CNC</strong><small>Célula ${state.selectedCell}</small></div></div><div class="headerActions"><button class="button" id="settings">Ajustes</button><button class="button" id="changeCell">Trocar</button></div></header><section class="summary"><div class="summaryCard"><span>Calculadas</span><strong>${calculated}/${machines.length}</strong></div><div class="summaryCard"><span>Neste turno</span><strong>${red}</strong></div><div class="summaryCard"><span>Próximo</span><strong>${orange}</strong></div></section><section class="machineGrid">${machines.map(machine=>{const result=calculate(machine),status=result.valid?result.status:{key:'neutral',label:'Sem cálculo'};return `<button class="machineCard status-${status.key}" data-machine="${esc(machine.id)}"><strong>${machineLabel(machine.machine)}</strong><span>${result.valid?formatClock(result.forecast.remainingMs):'Preencher dados'}</span><small>${status.label}</small></button>`;}).join('')}</section></main>`;
   app.querySelector('#changeCell').onclick=()=>{state.selectedCell=null;persist();render();};
+  app.querySelector('#settings').onclick=renderSettings;
   app.querySelectorAll('[data-machine]').forEach(card=>card.onclick=()=>openMachine(card.dataset.machine));
 }
 
-function openMachine(id,requestedMode=null){
-  activeMachineId=id;
-  const machine=getMachine(id);if(!machine)return;
-  const result=calculate(machine);
-  machineMode=requestedMode||(result.valid?'result':'edit');
-  renderMachine();
-}
+function openMachine(id,requestedMode=null){activeMachineId=id;const machine=getMachine(id);if(!machine)return;const result=calculate(machine);machineMode=requestedMode||(result.valid?'result':'edit');renderMachine();}
 function closeMachine(){activeMachineId=null;machineMode='edit';renderDashboard();}
 function activeIndex(){return currentMachines().findIndex(machine=>machine.id===activeMachineId);}
 function navigate(delta){const machines=currentMachines(),next=Math.max(0,Math.min(machines.length-1,activeIndex()+delta));openMachine(machines[next].id);}
@@ -120,52 +82,36 @@ function renderMachine(){
 
 function renderEditor(machine,result){
   const body=app.querySelector('#machineBody');
-  body.innerHTML=`<div class="editorGrid">
-    ${field('Ciclo','cycle',machine.cycle,'2,24','decimal')}
-    ${field('Peças restantes','currentBarValue',machine.currentBarValue,'0','decimal',`<select data-field="currentBarMode"><option value="pieces" ${machine.currentBarMode==='pieces'?'selected':''}>Peças</option><option value="partialMm" ${machine.currentBarMode==='partialMm'?'selected':''}>Milímetros</option><option value="full" ${machine.currentBarMode==='full'?'selected':''}>Barra cheia</option></select>`)}
-    ${field('Meta da OP','target',machine.target,'1000','numeric')}
-    ${field('Peça (mm)','pieceLength',machine.pieceLength,'32','decimal')}
-    ${field('Barras','fullBars',machine.fullBars,'0','numeric','',true)}
-    <section class="field wide"><label>Gabaritos</label><div id="trayList">${trayRows(machine)}</div><button class="button" id="addTray" type="button">Adicionar gabarito</button><small>Turnos passados: <strong id="trayTotal">${trayTotal(machine)}</strong></small></section>
-  </div><div id="validation">${validationMarkup(result)}</div>`;
-  body.querySelectorAll('[data-field]').forEach(input=>{
-    input.addEventListener('input',()=>{machine[input.dataset.field]=input.value;persist();updateEditorPreview(machine);});
-    input.addEventListener('change',()=>{machine[input.dataset.field]=input.value;const current=ensureStarted(machine);persist();updateEditorPreview(machine,current);});
-  });
-  bindTrayEvents(machine);
-  body.querySelector('#addTray').onclick=()=>{machine.trays.push('');persist();renderEditor(machine,calculate(machine));requestAnimationFrame(()=>body.querySelectorAll('[data-tray]')[machine.trays.length-1]?.focus());};
+  const useSum=state.settings.gabaritoMode==='sum';
+  body.innerHTML=`<div class="editorGrid">${field('Ciclo','cycle',machine.cycle,'2,24','decimal')}${field('Peças restantes','currentBarValue',machine.currentBarValue,'0','decimal',`<select data-field="currentBarMode"><option value="pieces" ${machine.currentBarMode==='pieces'?'selected':''}>Peças</option><option value="partialMm" ${machine.currentBarMode==='partialMm'?'selected':''}>Milímetros</option><option value="full" ${machine.currentBarMode==='full'?'selected':''}>Barra cheia</option></select>`)}${field('Meta da OP','target',machine.target,'1000','numeric')}${field('Peça (mm)','pieceLength',machine.pieceLength,'32','decimal')}${field('Barras','fullBars',machine.fullBars,'0','numeric','',true)}<section class="field wide"><label>Gabaritos</label>${useSum?`<input id="trayExpression" value="${esc((machine.trays||[]).filter(Boolean).join('+'))}" inputmode="numeric" placeholder="60+40+39+22">`:`<div id="trayList">${trayRows(machine)}</div><button class="button" id="addTray" type="button">Adicionar gabarito</button>`}<small>Turnos passados: <strong id="trayTotal">${trayTotal(machine)}</strong></small></section></div><div id="validation">${validationMarkup(result)}</div>`;
+  body.querySelectorAll('[data-field]').forEach(input=>{input.addEventListener('input',()=>{machine[input.dataset.field]=input.value;persist();updateEditorPreview(machine);});input.addEventListener('change',()=>{machine[input.dataset.field]=input.value;const current=ensureStarted(machine);persist();updateEditorPreview(machine,current);});});
+  if(useSum){const expression=body.querySelector('#trayExpression');expression.oninput=()=>{const valid=/^\s*\d*(?:\s*\+\s*\d+)*\s*$/.test(expression.value);if(valid){machine.trays=expression.value.split('+').map(value=>value.trim()).filter(Boolean);persist();body.querySelector('#trayTotal').textContent=trayTotal(machine);updateEditorPreview(machine);}};}else{bindTrayEvents(machine);body.querySelector('#addTray').onclick=()=>{machine.trays.push('');persist();renderEditor(machine,calculate(machine));requestAnimationFrame(()=>body.querySelectorAll('[data-tray]')[machine.trays.length-1]?.focus());};}
 }
 function field(label,name,value,placeholder,inputmode,extra='',wide=false){return `<div class="field ${wide?'wide':''}"><label>${label}</label><input data-field="${name}" inputmode="${inputmode}" value="${esc(value)}" placeholder="${placeholder}">${extra}</div>`;}
 function trayRows(machine){return machine.trays.map((value,index)=>`<div class="trayRow"><input data-tray="${index}" inputmode="numeric" value="${esc(value)}" placeholder="Quantidade"><button data-remove-tray="${index}" type="button">Remover</button></div>`).join('');}
-function bindTrayEvents(machine){
-  app.querySelectorAll('[data-tray]').forEach(input=>input.oninput=()=>{machine.trays[Number(input.dataset.tray)]=input.value;persist();app.querySelector('#trayTotal').textContent=trayTotal(machine);updateEditorPreview(machine);});
-  app.querySelectorAll('[data-remove-tray]').forEach(button=>button.onclick=()=>{machine.trays.splice(Number(button.dataset.removeTray),1);if(!machine.trays.length)machine.trays=[''];persist();renderEditor(machine,calculate(machine));});
-}
+function bindTrayEvents(machine){app.querySelectorAll('[data-tray]').forEach(input=>input.oninput=()=>{machine.trays[Number(input.dataset.tray)]=input.value;persist();app.querySelector('#trayTotal').textContent=trayTotal(machine);updateEditorPreview(machine);});app.querySelectorAll('[data-remove-tray]').forEach(button=>button.onclick=()=>{machine.trays.splice(Number(button.dataset.removeTray),1);if(!machine.trays.length)machine.trays=[''];persist();renderEditor(machine,calculate(machine));});}
 function validationMarkup(result){if(result.valid)return '<div class="section"><strong>Cálculo válido</strong><small> Salvo automaticamente.</small></div>';return `<div class="validation">${(result.validation?.errors||[]).map(error=>`<div>${esc(error.message||error)}</div>`).join('')||'Preencha os dados principais.'}</div>`;}
 function updateEditorPreview(machine,result=calculate(machine)){const node=app.querySelector('#validation');if(node)node.innerHTML=validationMarkup(result);}
 
 function renderResult(machine,result){
-  const body=app.querySelector('#machineBody');
-  const progress=result.production.target?Math.min(100,(result.production.completedEstimated/result.production.target)*100):0;
-  const materialPercent=result.material.perBar?Math.min(100,(result.material.currentPieces/result.material.perBar)*100):0;
-  body.innerHTML=`
-    <section class="section hero status-${result.status.key}"><div class="statusText">${result.status.label}</div><div class="countdown" data-live-countdown>${formatClock(result.forecast.remainingMs)}</div><div class="progress"><i style="width:${progress}%"></i></div></section>
-    <section class="section"><h2>Produção</h2><div class="metricGrid">${metric('Meta da OP',result.production.target)}${metric('Faltam',result.production.remainingOrder,'data-live-remaining')}${metric('Produção atual estimada',result.production.currentEstimated,'data-live-current')}${metric('Turnos passados',result.production.previousShifts)}</div></section>
-    <section class="section"><h2>Matéria-prima</h2><strong>${result.material.currentPieces} / ${result.material.perBar} peças na barra atual</strong><div class="materialBar"><i style="width:${materialPercent}%"></i></div><div class="metricGrid">${metric('MP disponível',result.material.totalCapacity)}${metric('Barras inteiras',result.material.fullBars)}${metric('Peças por barra',result.material.perBar)}${metric('Motivo do fim',result.forecast.reason==='order'?'Meta da OP':'Falta de MP')}</div></section>
-    <section class="section"><h2>Dados do cálculo</h2><div class="metricGrid">${metric('Tempo informado',result.cycle.informed)}${metric('Tempo convertido',result.cycle.decimalMinutes.toFixed(4)+' min')}${metric('Cálculo iniciado',formatDateTime(machine.calculationStartedAt))}${metric('Previsão',formatDateTime(result.forecast.endAt))}</div><details><summary>Ver cálculo</summary><pre>${esc(JSON.stringify(result.audit,null,2))}</pre></details></section>
-    ${result.preset.required?renderPreset(machine):''}`;
+  const body=app.querySelector('#machineBody');const progress=result.production.target?Math.min(100,(result.production.completedEstimated/result.production.target)*100):0;const materialPercent=result.material.perBar?Math.min(100,(result.material.currentPieces/result.material.perBar)*100):0;
+  body.innerHTML=`<section class="section hero status-${result.status.key}"><div class="statusText">${result.status.label}</div><div class="countdown" data-live-countdown>${formatClock(result.forecast.remainingMs)}</div><div class="progress"><i style="width:${progress}%"></i></div></section><section class="section"><h2>Produção</h2><div class="metricGrid">${metric('Meta da OP',result.production.target)}${metric('Faltam',result.production.remainingOrder,'data-live-remaining')}${metric('Produção atual estimada',result.production.currentEstimated,'data-live-current')}${metric('Turnos passados',result.production.previousShifts)}</div></section><section class="section"><h2>Matéria-prima</h2><strong>${result.material.currentPieces} / ${result.material.perBar} peças na barra atual</strong><div class="materialBar"><i style="width:${materialPercent}%"></i></div><div class="metricGrid">${metric('MP disponível',result.material.totalCapacity)}${metric('Barras inteiras',result.material.fullBars)}${metric('Peças por barra',result.material.perBar)}${metric('Motivo do fim',result.forecast.reason==='order'?'Meta da OP':'Falta de MP')}</div></section><section class="section"><h2>Dados do cálculo</h2><div class="metricGrid">${metric('Tempo informado',result.cycle.informed)}${metric('Tempo convertido',result.cycle.decimalMinutes.toFixed(4)+' min')}${metric('Cálculo iniciado',formatDateTime(machine.calculationStartedAt))}${metric('Previsão',formatDateTime(result.forecast.endAt))}</div><details><summary>Ver cálculo</summary><pre>${esc(JSON.stringify(result.audit,null,2))}</pre></details></section>${result.preset.required?renderPreset(machine):''}`;
   bindPreset(machine);
 }
 function metric(label,value,attr=''){return `<div class="metric"><span>${label}</span><strong ${attr}>${esc(value)}</strong></div>`;}
 function renderPreset(machine){return `<section class="section"><h2>Próxima OP</h2><div class="editorGrid"><div class="field"><label>Preset já trouxe?</label><select data-preset="brought"><option value="false" ${!machine.preset.brought?'selected':''}>Não</option><option value="true" ${machine.preset.brought?'selected':''}>Sim</option></select></div>${machine.preset.brought?`<div class="field"><label>Tipo</label><select data-preset="type"><option value="sequencia" ${machine.preset.type==='sequencia'?'selected':''}>Sequência</option><option value="azul" ${machine.preset.type==='azul'?'selected':''}>Setup azul</option><option value="verde" ${machine.preset.type==='verde'?'selected':''}>Setup verde</option><option value="vermelho" ${machine.preset.type==='vermelho'?'selected':''}>Setup vermelho</option></select></div>`:''}</div></section>`;}
 function bindPreset(machine){app.querySelectorAll('[data-preset]').forEach(input=>input.onchange=()=>{machine.preset[input.dataset.preset]=input.dataset.preset==='brought'?input.value==='true':input.value;persist();renderMachine();});}
 
-function refreshVisible(){
-  if(!activeMachineId||machineMode!=='result')return;
-  const machine=getMachine(activeMachineId),result=calculate(machine);if(!result.valid)return;
-  const countdown=app.querySelector('[data-live-countdown]');if(countdown)countdown.textContent=formatClock(result.forecast.remainingMs);
-  const remaining=app.querySelector('[data-live-remaining]');if(remaining)remaining.textContent=result.production.remainingOrder;
-  const current=app.querySelector('[data-live-current]');if(current)current.textContent=result.production.currentEstimated;
+function renderSettings(){
+  const machines=currentMachines();
+  app.innerHTML=`<div class="settingsScreen"><header class="modalHeader"><button class="button" id="closeSettings">Voltar</button><div><strong>Ajustes</strong><small>Célula ${state.selectedCell}</small></div><button class="primary" id="saveSettings">Salvar</button></header><main class="settingsBody"><section class="section"><h2>Cálculo</h2><div class="editorGrid">${field('Comprimento da barra (mm)','setting-barLength',state.settings.barLength,'3600','decimal')}${field('Largura do bedame (mm)','setting-kerfWidth',state.settings.kerfWidth,'1','decimal')}${field('Janela do preset (h)','setting-presetLimitHours',state.settings.presetLimitHours,'16','decimal')}<div class="field"><label>Gabaritos</label><select id="setting-gabaritoMode"><option value="individual" ${state.settings.gabaritoMode==='individual'?'selected':''}>Campos individuais</option><option value="sum" ${state.settings.gabaritoMode==='sum'?'selected':''}>Soma rápida</option></select></div></div></section><section class="section"><div class="sectionHeader"><h2>Ordem das máquinas</h2><button class="button" id="restoreOrder">Restaurar</button></div><div class="orderList">${machines.map((machine,index)=>`<div class="orderRow"><strong>${machineLabel(machine.machine)}</strong><div><button data-move="-1" data-id="${esc(machine.id)}" ${index===0?'disabled':''}>Subir</button><button data-move="1" data-id="${esc(machine.id)}" ${index===machines.length-1?'disabled':''}>Descer</button></div></div>`).join('')}</div></section><section class="section"><h2>Dados</h2><p class="muted">As alterações são salvas apenas neste aparelho. A ordem é independente para cada célula.</p></section></main></div>`;
+  app.querySelector('#closeSettings').onclick=renderDashboard;
+  app.querySelector('#saveSettings').onclick=()=>{const next=sanitizeSettings({barLength:app.querySelector('[data-field="setting-barLength"]').value,kerfWidth:app.querySelector('[data-field="setting-kerfWidth"]').value,presetLimitHours:app.querySelector('[data-field="setting-presetLimitHours"]').value,gabaritoMode:app.querySelector('#setting-gabaritoMode').value},state.settings);state.settings=next;persist();renderDashboard();};
+  app.querySelectorAll('[data-move]').forEach(button=>button.onclick=()=>{state.cells[state.selectedCell]=moveMachine(currentMachines(),button.dataset.id,Number(button.dataset.move));persist();renderSettings();});
+  app.querySelector('#restoreOrder').onclick=()=>{state.cells[state.selectedCell]=restoreMachineOrder(currentMachines(),CELL_MACHINES[state.selectedCell]||[]);persist();renderSettings();};
 }
 
+function refreshVisible(){if(!activeMachineId||machineMode!=='result')return;const machine=getMachine(activeMachineId),result=calculate(machine);if(!result.valid)return;const countdown=app.querySelector('[data-live-countdown]');if(countdown)countdown.textContent=formatClock(result.forecast.remainingMs);const remaining=app.querySelector('[data-live-remaining]');if(remaining)remaining.textContent=result.production.remainingOrder;const current=app.querySelector('[data-live-current]');if(current)current.textContent=result.production.currentEstimated;}
+
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Service worker não registrado',error)));}
 render();
