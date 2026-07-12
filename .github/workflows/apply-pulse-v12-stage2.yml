@@ -39,12 +39,12 @@ jobs:
         run: |
           grep -Fq '<title>PULSE CNC | V12.1.0</title>' index.html
           grep -Fq 'function currentBarInfoV12' index.html
+          grep -Fq 'class="machineView pulseEditorV12"' index.html
           grep -Fq 'class="machineView pulseDashboardV12"' index.html
           grep -Fq '<h3>Produção</h3>' index.html
           grep -Fq '<h3>Matéria-prima</h3>' index.html
           grep -Fq '<h3>Dados do cálculo</h3>' index.html
-          ! grep -Fq 'Modo operador' index.html
-          ! grep -Fq 'Preenchimento rápido' index.html
+          grep -Fq 'operationalStatusV12' index.html
       - name: Commit stage 2
         run: |
           git config user.name 'github-actions[bot]'
