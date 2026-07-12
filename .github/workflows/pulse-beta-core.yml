@@ -6,6 +6,7 @@ on:
     paths:
       - 'src/core/**'
       - 'src/storage/**'
+      - 'src/settings/**'
       - 'beta/**'
       - 'tests/**'
       - 'package.json'
@@ -15,14 +16,19 @@ permissions:
   contents: read
 
 jobs:
-  core-tests:
+  beta-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validar sintaxe da interface
-        run: node --check beta/app.js
-      - name: Testar motor, armazenamento, migração e interface
+      - name: Testar motor, armazenamento, ajustes e interface
         run: npm test
+      - name: Validar sintaxe dos módulos da interface
+        run: |
+          node --check beta/app.js
+          node --check beta/sw.js
+          node --check src/settings/settings-engine.js
+      - name: Validar manifesto PWA
+        run: node -e "const m=require('./beta/manifest.json'); if(m.name!=='PULSE CNC'||m.display!=='standalone') process.exit(1)"
