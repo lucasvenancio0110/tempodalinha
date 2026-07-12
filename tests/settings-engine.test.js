@@ -11,7 +11,7 @@ const machines = [
 test('move máquina para cima e para baixo sem perder dados', () => {
   const down = moveMachine(machines, 'a', 1);
   assert.deepEqual(down.map(item => item.machine), ['052', '061', '060']);
-  const up = moveMachine(down, '060', -1);
+  const up = moveMachine(down, 'c', -1);
   assert.deepEqual(up.map(item => item.machine), ['052', '060', '061']);
   assert.equal(up.find(item => item.id === 'a').machine, '061');
 });
