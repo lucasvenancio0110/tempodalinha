@@ -1,0 +1,40 @@
+name: PULSE CNC Beta Core
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/core/**'
+      - 'src/storage/**'
+      - 'src/settings/**'
+      - 'beta/**'
+      - 'tests/**'
+      - 'package.json'
+      - '.github/workflows/pulse-beta-core.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  beta-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Testar motor de cálculo
+        run: node --test tests/core-engine.test.js
+      - name: Testar armazenamento e migração
+        run: node --test tests/storage-engine.test.js
+      - name: Testar ajustes e ordem das máquinas
+        run: node --test tests/settings-engine.test.js
+      - name: Testar contratos da interface e PWA
+        run: node --test tests/ui-contract.test.js
+      - name: Validar sintaxe dos módulos da interface
+        run: |
+          node --check beta/app.js
+          node --check beta/sw.js
+          node --check src/settings/settings-engine.js
+      - name: Validar manifesto PWA
+        run: node -e "const m=require('./beta/manifest.json'); if(m.name!=='PULSE CNC'||m.display!=='standalone') process.exit(1)"

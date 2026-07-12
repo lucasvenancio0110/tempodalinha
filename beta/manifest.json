@@ -1,0 +1,12 @@
+{
+  "name": "PULSE CNC",
+  "short_name": "PULSE CNC",
+  "description": "Assistente operacional para preparadores CNC.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#081117",
+  "theme_color": "#081117",
+  "lang": "pt-BR"
+}
