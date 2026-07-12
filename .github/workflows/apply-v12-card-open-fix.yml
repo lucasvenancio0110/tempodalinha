@@ -1,0 +1,42 @@
+name: Apply V12 card open fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - V12_CARD_OPEN_TRIGGER.txt
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply fix
+        run: python scripts/fix_v12_card_open.py
+      - name: Validate JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('index.html').read_text(encoding='utf-8')
+          for i,s in enumerate(re.findall(r'<script>(.*?)</script>',html,flags=re.S)):
+              Path(f'/tmp/app-{i}.js').write_text(s,encoding='utf-8')
+          PY
+          for file in /tmp/app-*.js; do node --check "$file"; done
+      - name: Validate fix
+        run: |
+          grep -Fq '<title>PULSE CNC | V12.1.1</title>' index.html
+          grep -Fq 'const openFromCard = event =>' index.html
+          grep -Fq 'machineScreen.showModal();' index.html
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'fix: restaurar abertura dos cards da máquina'
+          git push
