@@ -25,6 +25,12 @@ export function calculateMachine(input, context = {}) {
     now,
     cycleSeconds
   });
+  const productionAtStart = calculateProduction({
+    target: input.target,
+    trays: input.trays || [],
+    now: calculationStartedAt,
+    cycleSeconds
+  });
   const material = calculateMaterial({
     barLength: input.barLength ?? 3600,
     pieceLength: input.pieceLength,
@@ -34,8 +40,8 @@ export function calculateMachine(input, context = {}) {
     fullBars: input.fullBars ?? 0
   });
 
-  const piecesUntilStop = Math.min(production.remainingOrder, material.totalCapacity);
-  const stopReason = production.remainingOrder <= material.totalCapacity ? 'order' : 'material';
+  const piecesUntilStop = Math.min(productionAtStart.remainingOrder, material.totalCapacity);
+  const stopReason = productionAtStart.remainingOrder <= material.totalCapacity ? 'order' : 'material';
   const durationSeconds = piecesUntilStop * cycleSeconds;
   const endAt = new Date(calculationStartedAt.getTime() + durationSeconds * 1000);
   const remainingMs = Math.max(0, endAt.getTime() - now.getTime());
@@ -82,7 +88,8 @@ export function calculateMachine(input, context = {}) {
         totalCapacity: material.totalCapacity
       },
       forecast: {
-        formula: 'menor entre saldo da OP e capacidade de MP × ciclo',
+        formula: 'saldo da OP no início do cálculo ou capacidade de MP, o que acabar primeiro, multiplicado pelo ciclo',
+        remainingOrderAtStart: productionAtStart.remainingOrder,
         piecesUntilStop,
         cycleSeconds,
         durationSeconds,
