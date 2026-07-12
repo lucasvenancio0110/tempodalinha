@@ -1,1 +1,0 @@
-Apply responsive layout correction for V11.1.01.
