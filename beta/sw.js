@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pulse-cnc-beta-1.0.0';
+const CACHE_NAME = 'pulse-cnc-beta-1.0.1';
 const APP_SHELL = [
   './',
   './index.html',
@@ -12,7 +12,8 @@ const APP_SHELL = [
   '../src/core/time-engine.js',
   '../src/core/validation-engine.js',
   '../src/storage/storage-engine.js',
-  '../src/settings/settings-engine.js'
+  '../src/settings/settings-engine.js',
+  '../src/share/share-engine.js'
 ];
 
 self.addEventListener('install', event => {
