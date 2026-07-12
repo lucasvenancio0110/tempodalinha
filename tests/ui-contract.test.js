@@ -5,6 +5,8 @@ import { readFile } from 'node:fs/promises';
 const html=await readFile(new URL('../beta/index.html',import.meta.url),'utf8');
 const js=await readFile(new URL('../beta/app.js',import.meta.url),'utf8');
 const css=await readFile(new URL('../beta/app.css',import.meta.url),'utf8');
+const manifest=JSON.parse(await readFile(new URL('../beta/manifest.json',import.meta.url),'utf8'));
+const sw=await readFile(new URL('../beta/sw.js',import.meta.url),'utf8');
 
 test('beta possui identidade e entrada modular',()=>{
   assert.match(html,/PULSE CNC 1\.0 Beta/);
@@ -46,4 +48,22 @@ test('status usa apenas cores e não emojis operacionais',()=>{
   assert.match(css,/--orange/);
   assert.match(css,/--red/);
   assert.doesNotMatch(js,/🟢|🟠|🔴/);
+});
+
+test('ajustes possuem bedame, gabaritos e ordem por célula',()=>{
+  assert.match(js,/Largura do bedame/);
+  assert.match(js,/Campos individuais/);
+  assert.match(js,/Soma rápida/);
+  assert.match(js,/moveMachine\(currentMachines/);
+  assert.match(js,/restoreMachineOrder\(currentMachines/);
+});
+
+test('beta está preparada para instalação e uso offline',()=>{
+  assert.match(html,/rel="manifest"/);
+  assert.equal(manifest.name,'PULSE CNC');
+  assert.equal(manifest.display,'standalone');
+  assert.match(js,/serviceWorker\.register/);
+  assert.match(sw,/CACHE_NAME/);
+  assert.match(sw,/cache\.addAll/);
+  assert.match(sw,/src\/core\/calc-engine\.js/);
 });
