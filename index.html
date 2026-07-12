@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07141c">
-  <title>PULSE CNC | V12.1.0</title>
+  <title>PULSE CNC | V12.1.1</title>
   <style>
     :root {
       --bg: #0b1117;
@@ -1519,6 +1519,11 @@
     .cockpitV11{height:auto!important;min-height:100%!important;overflow:visible!important}
     @media(max-width:390px){.pulseEditorGridV12{gap:8px}.pulseFieldV12{min-height:86px;padding:10px 11px}.pulseFieldV12 .operatorInput{font-size:24px!important}.pulseMetricsV12{gap:7px}.pulseMetricV12 strong{font-size:20px}}
 
+  
+    /* PULSE CNC V12.1.1 — área inteira do card abre a máquina */
+    .machineCard{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+    .machineCard:active{transform:scale(.995)}
+
   </style>
 </head>
 <body class="cell-selection">
@@ -2708,7 +2713,21 @@
     }
 
     function bindActions(root, machine) {
-      root.querySelector('[data-action="toggle"]').addEventListener("click", () => {
+      const openFromCard = event => {
+        if (event.target.closest('button, input, select, textarea, label, a')) return;
+        openMachineScreen(machine.id);
+      };
+      root.addEventListener("click", openFromCard);
+      root.style.cursor = "pointer";
+      root.setAttribute("role", "button");
+      root.setAttribute("tabindex", "0");
+      root.addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        openMachineScreen(machine.id);
+      });
+      root.querySelector('[data-action="toggle"]').addEventListener("click", event => {
+        event.stopPropagation();
         openMachineScreen(machine.id);
       });
       const removeButton = root.querySelector('[data-action="remove"]');
@@ -2786,9 +2805,17 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       activeMachineId = machineId;
       const calc = calcMachine(machine);
       machineScreenMode = requestedMode || (calc.valid ? "result" : "edit");
-      renderMachineScreen();
-      if (!machineScreen.open) machineScreen.showModal();
-      document.body.classList.add("machine-screen-open");
+      try {
+        if (!machineScreen.open) machineScreen.showModal();
+        document.body.classList.add("machine-screen-open");
+        renderMachineScreen();
+      } catch (error) {
+        console.error("Falha ao abrir máquina", error);
+        machineScreenMode = "edit";
+        if (!machineScreen.open) machineScreen.showModal();
+        document.body.classList.add("machine-screen-open");
+        renderMachineScreen();
+      }
       requestAnimationFrame(() => {
         machineQueue.querySelector('.queueMachine.is-active')?.scrollIntoView({ behavior:"smooth", inline:"center", block:"nearest" });
       });
