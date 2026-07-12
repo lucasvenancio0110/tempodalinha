@@ -1,1 +1,1 @@
-Apply V11.1.00 compact editor, live preview, machine reordering and tray mode.
+Run V11.1.00 compact editor, live preview, machine reordering and tray mode now.
