@@ -23,8 +23,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Testar motor, armazenamento, ajustes e interface
-        run: npm test
+      - name: Testar motor de cálculo
+        run: node --test tests/core-engine.test.js
+      - name: Testar armazenamento e migração
+        run: node --test tests/storage-engine.test.js
+      - name: Testar ajustes e ordem das máquinas
+        run: node --test tests/settings-engine.test.js
+      - name: Testar contratos da interface e PWA
+        run: node --test tests/ui-contract.test.js
       - name: Validar sintaxe dos módulos da interface
         run: |
           node --check beta/app.js
