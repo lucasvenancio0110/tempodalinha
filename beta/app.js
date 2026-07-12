@@ -1,6 +1,7 @@
 import { calculateMachine } from '../src/core/calc-engine.js';
 import { createDefaultMachine, loadState, saveState } from '../src/storage/storage-engine.js';
 import { moveMachine, restoreMachineOrder, sanitizeSettings } from '../src/settings/settings-engine.js';
+import { buildCellReport } from '../src/share/share-engine.js';
 
 const CELL_MACHINES={
   '01':[2,5,15,19,23,24,25,26,27,29,30,35,46,47,48],
@@ -57,11 +58,24 @@ function renderDashboard(){
   const calculated=results.filter(result=>result.valid).length;
   const red=results.filter(result=>result.valid&&result.status.key==='red').length;
   const orange=results.filter(result=>result.valid&&result.status.key==='orange').length;
-  app.innerHTML=`<main class="shell"><header class="topbar"><div class="brand"><div class="brandMark">P</div><div><strong>PULSE CNC</strong><small>Célula ${state.selectedCell}</small></div></div><div class="headerActions"><button class="button" id="settings">Ajustes</button><button class="button" id="changeCell">Trocar</button></div></header><section class="summary"><div class="summaryCard"><span>Calculadas</span><strong>${calculated}/${machines.length}</strong></div><div class="summaryCard"><span>Neste turno</span><strong>${red}</strong></div><div class="summaryCard"><span>Próximo</span><strong>${orange}</strong></div></section><section class="machineGrid">${machines.map(machine=>{const result=calculate(machine),status=result.valid?result.status:{key:'neutral',label:'Sem cálculo'};return `<button class="machineCard status-${status.key}" data-machine="${esc(machine.id)}"><strong>${machineLabel(machine.machine)}</strong><span>${result.valid?formatClock(result.forecast.remainingMs):'Preencher dados'}</span><small>${status.label}</small></button>`;}).join('')}</section></main>`;
+  app.innerHTML=`<main class="shell"><header class="topbar"><div class="brand"><div class="brandMark">P</div><div><strong>PULSE CNC</strong><small>Célula ${state.selectedCell} · Beta 1.0</small></div></div><div class="headerActions"><button class="button" id="shareCell">Compartilhar</button><button class="button" id="settings">Ajustes</button><button class="button" id="changeCell">Trocar</button></div></header><section class="summary"><div class="summaryCard"><span>Calculadas</span><strong>${calculated}/${machines.length}</strong></div><div class="summaryCard"><span>Neste turno</span><strong>${red}</strong></div><div class="summaryCard"><span>Próximo</span><strong>${orange}</strong></div></section><section class="machineGrid">${machines.map(machine=>{const result=calculate(machine),status=result.valid?result.status:{key:'neutral',label:'Sem cálculo'};return `<button class="machineCard status-${status.key}" data-machine="${esc(machine.id)}"><strong>${machineLabel(machine.machine)}</strong><span>${result.valid?formatClock(result.forecast.remainingMs):'Preencher dados'}</span><small>${status.label}</small></button>`;}).join('')}</section><div class="toast" id="toast" role="status" aria-live="polite"></div></main>`;
   app.querySelector('#changeCell').onclick=()=>{state.selectedCell=null;persist();render();};
   app.querySelector('#settings').onclick=renderSettings;
+  app.querySelector('#shareCell').onclick=shareCurrentCell;
   app.querySelectorAll('[data-machine]').forEach(card=>card.onclick=()=>openMachine(card.dataset.machine));
 }
+
+async function shareCurrentCell(){
+  const report=buildCellReport({cellId:state.selectedCell,machines:currentMachines(),calculate});
+  try{
+    if(navigator.share){await navigator.share({title:`PULSE CNC · Célula ${state.selectedCell}`,text:report.text});showToast('Resumo compartilhado');return;}
+    await navigator.clipboard.writeText(report.text);showToast('Resumo copiado');
+  }catch(error){
+    if(error?.name==='AbortError')return;
+    const area=document.createElement('textarea');area.value=report.text;area.style.position='fixed';area.style.opacity='0';document.body.append(area);area.select();document.execCommand('copy');area.remove();showToast('Resumo copiado');
+  }
+}
+function showToast(message){const toast=app.querySelector('#toast');if(!toast)return;toast.textContent=message;toast.classList.add('visible');setTimeout(()=>toast.classList.remove('visible'),2200);}
 
 function openMachine(id,requestedMode=null){activeMachineId=id;const machine=getMachine(id);if(!machine)return;const result=calculate(machine);machineMode=requestedMode||(result.valid?'result':'edit');renderMachine();}
 function closeMachine(){activeMachineId=null;machineMode='edit';renderDashboard();}

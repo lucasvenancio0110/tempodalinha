@@ -7,6 +7,7 @@ on:
       - 'src/core/**'
       - 'src/storage/**'
       - 'src/settings/**'
+      - 'src/share/**'
       - 'beta/**'
       - 'tests/**'
       - 'package.json'
@@ -29,6 +30,8 @@ jobs:
         run: node --test tests/storage-engine.test.js
       - name: Testar ajustes e ordem das máquinas
         run: node --test tests/settings-engine.test.js
+      - name: Testar compartilhamento operacional
+        run: node --test tests/share-engine.test.js
       - name: Testar contratos da interface e PWA
         run: node --test tests/ui-contract.test.js
       - name: Validar sintaxe dos módulos da interface
@@ -36,5 +39,6 @@ jobs:
           node --check beta/app.js
           node --check beta/sw.js
           node --check src/settings/settings-engine.js
+          node --check src/share/share-engine.js
       - name: Validar manifesto PWA
         run: node -e "const m=require('./beta/manifest.json'); if(m.name!=='PULSE CNC'||m.display!=='standalone') process.exit(1)"
