@@ -1,0 +1,97 @@
+name: Apply PULSE Sprint 1.1
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Aplicar Sprint 1.1
+        run: python tools/apply_pulse_sprint_1_1.py
+      - name: Validar contratos e sintaxe
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          text = Path('index.html').read_text(encoding='utf-8')
+          required = [
+            'getOperationalStatus(nowDT, endDT)',
+            'getOperationalStatus(nowDT, endDT);',
+            'Total dos gabaritos',
+            'Produção ao vivo',
+            'Produção até o fim do turno',
+            'Faltam para a meta',
+            'Matéria-prima',
+            'Detalhes do cálculo',
+            'Previsão fixa',
+            'data-v10-live="countdown"',
+            'data-v10-live="estimated"',
+            'data-v10-live="shift-end-estimated"',
+            'data-v10-live="missing"',
+            'data-v10-live="progress-bar"',
+          ]
+          for marker in required:
+            assert marker in text, marker
+          assert 'getOperationalStatus(restMin)' not in text
+          scripts = re.findall(r'<script>(.*?)</script>', text, re.S)
+          assert scripts
+          Path('/tmp/app.js').write_text('\n'.join(scripts), encoding='utf-8')
+          print('Contratos visuais e de atualização ao vivo preservados')
+          PY
+          node --check /tmp/app.js
+      - name: Testar classificação por turno e contador
+        run: |
+          node <<'JS'
+          function getShiftWindowFor(date) {
+            const base = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+            const mk = (h,m,plus=0) => { const d=new Date(base); d.setDate(d.getDate()+plus); d.setHours(h,m,0,0); return d; };
+            const minutes=date.getHours()*60+date.getMinutes();
+            if (minutes < 390) return {id:3,startDT:mk(22,40,-1),endDT:mk(6,30,0)};
+            if (minutes < 880) return {id:1,startDT:mk(6,30,0),endDT:mk(14,40,0)};
+            if (minutes < 1360) return {id:2,startDT:mk(14,40,0),endDT:mk(22,40,0)};
+            return {id:3,startDT:mk(22,40,0),endDT:mk(6,30,1)};
+          }
+          function nextShiftWindow(prevEnd, prevId) {
+            const nextId=prevId===3?1:prevId+1;
+            const base=new Date(prevEnd.getFullYear(),prevEnd.getMonth(),prevEnd.getDate(),0,0,0,0);
+            const map={1:[6,30,14,40],2:[14,40,22,40],3:[22,40,6,30]};
+            const s=new Date(base); s.setHours(map[nextId][0],map[nextId][1],0,0);
+            const e=new Date(base); e.setHours(map[nextId][2],map[nextId][3],0,0);
+            if(nextId===3||e<=s)e.setDate(e.getDate()+1); if(s<prevEnd)s.setTime(prevEnd.getTime());
+            return {id:nextId,startDT:s,endDT:e};
+          }
+          function status(nowDT,endDT){ const current=getShiftWindowFor(nowDT); if(endDT<=current.endDT)return 'now'; const next=nextShiftWindow(current.endDT,current.id); if(endDT<=next.endDT)return 'next'; return 'ok'; }
+          const now = new Date(2026,6,13,13,31,0);
+          if (status(now,new Date(2026,6,13,14,20,0)) !== 'now') throw new Error('turno atual');
+          if (status(now,new Date(2026,6,13,19,26,0)) !== 'next') throw new Error('próximo turno');
+          if (status(now,new Date(2026,6,14,7,0,0)) !== 'ok') throw new Error('produção normal');
+          const end = new Date(2026,6,13,19,26,0).getTime();
+          const rest1 = end - now.getTime();
+          const rest2 = end - (now.getTime()+1000);
+          if (!(rest2 === rest1-1000 && rest2 < rest1)) throw new Error('contador não diminui');
+          console.log('Classificação por turno e contador aprovados');
+          JS
+      - name: Commitar resultado
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Implementa PULSE CNC Sprint 1.1"
+          git push
