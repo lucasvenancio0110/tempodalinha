@@ -1,20 +1,20 @@
 name: Apply live counter and modal fix
 
 on:
-  push:
-    branches: [feature/pulse-live-counter-modal-fix]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
   apply-and-test:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: feature/pulse-live-counter-modal-fix
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
