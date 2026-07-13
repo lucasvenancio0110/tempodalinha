@@ -44,7 +44,7 @@ jobs:
           for marker in required:
             assert marker in text, marker
           assert 'setInterval(refreshLiveRemaining, 250);' not in text
-          assert 'data-v10-live="milliseconds"' not in re.sub(r'<style>.*?</style>', '', text, flags=re.S)
+          assert not re.search(r'<small[^>]*(?:clockMs|countdownMs|data-v10-live="milliseconds")', text)
           scripts = re.findall(r'<script>(.*?)</script>', text, re.S)
           assert scripts
           Path('/tmp/app.js').write_text('\n'.join(scripts), encoding='utf-8')
