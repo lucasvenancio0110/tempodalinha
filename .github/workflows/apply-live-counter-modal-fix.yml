@@ -1,0 +1,76 @@
+name: Apply live counter and modal fix
+
+on:
+  push:
+    branches: [feature/pulse-live-counter-modal-fix]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/pulse-live-counter-modal-fix
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Aplicar correções
+        run: python tools/apply_live_counter_modal_fix.py
+      - name: Validar contratos
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          text = Path('index.html').read_text(encoding='utf-8')
+          required = [
+            'setInterval(refreshLiveRemaining, 1000);',
+            "if (machineScreenMode === 'edit')",
+            'editorLiveResult ${statusClass}',
+            'data-v12-editor-countdown',
+            'body:has(#settingsModal[open])',
+            '#settingsModal .modalBody',
+            'overflow-y:auto !important',
+            'position:sticky',
+            'HH:MM:SS com atualização a cada segundo'
+          ]
+          for marker in required:
+            assert marker in text, marker
+          assert 'setInterval(refreshLiveRemaining, 250);' not in text
+          assert 'data-v10-live="milliseconds"' not in re.sub(r'<style>.*?</style>', '', text, flags=re.S)
+          scripts = re.findall(r'<script>(.*?)</script>', text, re.S)
+          assert scripts
+          Path('/tmp/app.js').write_text('\n'.join(scripts), encoding='utf-8')
+          print('Contratos aprovados')
+          PY
+          node --check /tmp/app.js
+      - name: Testar relógio por segundo
+        run: |
+          node <<'JS'
+          const end = new Date(2026,6,13,19,26,0).getTime();
+          const now = new Date(2026,6,13,14,7,0).getTime();
+          const first = end-now;
+          const second = end-(now+1000);
+          if(second !== first-1000 || second >= first) throw new Error('contador');
+          const format = ms => {
+            const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+          };
+          if(!/^\d{2}:\d{2}:\d{2}$/.test(format(first))) throw new Error('formato');
+          console.log('Contador por segundo aprovado');
+          JS
+      - name: Commitar resultado
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Corrige contador ao vivo, cores e rolagem dos ajustes"
+          git push
