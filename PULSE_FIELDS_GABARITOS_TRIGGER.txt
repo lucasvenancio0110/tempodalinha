@@ -1,1 +1,0 @@
-Aplicar e validar campos compactos, gabaritos individuais e soma rápida no HTML monolítico.
