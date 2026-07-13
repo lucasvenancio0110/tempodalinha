@@ -1,0 +1,55 @@
+name: Apply PULSE CNC Monolith Stage 1
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - PULSE_MONOLITH_STAGE1_TRIGGER.txt
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  apply-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply identity only
+        run: python scripts/apply_pulse_monolith_stage1.py
+
+      - name: Validate JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
+          if not scripts:
+              raise SystemExit('JavaScript não encontrado')
+          for i, script in enumerate(scripts):
+              Path(f'/tmp/pulse-{i}.js').write_text(script, encoding='utf-8')
+          PY
+          for file in /tmp/pulse-*.js; do node --check "$file"; done
+
+      - name: Validate safe scope
+        run: |
+          grep -Fq '<title>PULSE CNC | 1.0 Beta</title>' index.html
+          grep -Fq '<strong>PULSE CNC</strong>' index.html
+          grep -Fq '<span>1.0 Beta</span>' index.html
+          grep -Fq 'function calcMachine' index.html
+          grep -Fq 'function renderMachine' index.html
+          grep -Fq 'localStorage' index.html
+
+      - name: Commit generated index
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'feat: aplicar identidade PULSE CNC sem alterar lógica'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
