@@ -1,0 +1,52 @@
+name: Normalize PULSE Sprint 1.1
+
+on:
+  push:
+    branches: [feature/pulse-sprint-1-1]
+
+permissions:
+  contents: write
+
+jobs:
+  normalize-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/pulse-sprint-1-1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restaurar CRLF e validar JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8').replace('\r\n','\n')
+          required = ['getOperationalStatus(nowDT, endDT)', 'Total dos gabaritos', 'Produção ao vivo', 'Matéria-prima', 'Previsão fixa', 'Detalhes do cálculo']
+          for marker in required: assert marker in text, marker
+          scripts = re.findall(r'<script>(.*?)</script>', text, re.S)
+          assert scripts
+          Path('/tmp/app.js').write_text('\n'.join(scripts), encoding='utf-8')
+          path.write_bytes(text.replace('\n','\r\n').encode('utf-8'))
+          PY
+          node --check /tmp/app.js
+      - name: Testar turno e contador
+        run: |
+          node <<'JS'
+          function getShiftWindowFor(date){const b=new Date(date.getFullYear(),date.getMonth(),date.getDate(),0,0,0,0);const mk=(h,m,p=0)=>{const d=new Date(b);d.setDate(d.getDate()+p);d.setHours(h,m,0,0);return d};const x=date.getHours()*60+date.getMinutes();if(x<390)return{id:3,startDT:mk(22,40,-1),endDT:mk(6,30)};if(x<880)return{id:1,startDT:mk(6,30),endDT:mk(14,40)};if(x<1360)return{id:2,startDT:mk(14,40),endDT:mk(22,40)};return{id:3,startDT:mk(22,40),endDT:mk(6,30,1)}}
+          function nextShiftWindow(e,id){const n=id===3?1:id+1,b=new Date(e.getFullYear(),e.getMonth(),e.getDate(),0,0,0,0),m={1:[6,30,14,40],2:[14,40,22,40],3:[22,40,6,30]},s=new Date(b),f=new Date(b);s.setHours(m[n][0],m[n][1],0,0);f.setHours(m[n][2],m[n][3],0,0);if(n===3||f<=s)f.setDate(f.getDate()+1);if(s<e)s.setTime(e.getTime());return{id:n,startDT:s,endDT:f}}
+          function status(now,end){const c=getShiftWindowFor(now);if(end<=c.endDT)return'now';const n=nextShiftWindow(c.endDT,c.id);if(end<=n.endDT)return'next';return'ok'}
+          const now=new Date(2026,6,13,13,31); if(status(now,new Date(2026,6,13,19,26))!=='next')throw Error('status'); const end=new Date(2026,6,13,19,26).getTime(); if(!((end-(now.getTime()+1000))<(end-now.getTime())))throw Error('contador');
+          JS
+      - name: Commitar normalização
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Restaura formato original do index.html"
+          git push
