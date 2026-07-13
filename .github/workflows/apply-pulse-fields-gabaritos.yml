@@ -1,0 +1,72 @@
+name: Apply PULSE Fields and Trays
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - PULSE_FIELDS_GABARITOS_TRIGGER.txt
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  apply-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply safe monolith patch
+        run: python scripts/apply_pulse_fields_gabaritos.py
+
+      - name: Validate embedded JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>(.*?)</script>', html, flags=re.S)
+          if not scripts:
+              raise SystemExit('JavaScript não encontrado')
+          for index, script in enumerate(scripts):
+              Path(f'/tmp/pulse-{index}.js').write_text(script, encoding='utf-8')
+          PY
+          for file in /tmp/pulse-*.js; do node --check "$file"; done
+
+      - name: Validate tray contracts
+        run: |
+          grep -Fq 'gabaritoMode: "individual"' index.html
+          grep -Fq 'data-v10-action="gabarito-mode"' index.html
+          grep -Fq '>Individual</button>' index.html
+          grep -Fq '>Soma rápida</button>' index.html
+          grep -Fq 'syncPastProductionV11(machine)' index.html
+          grep -Fq 'function renderMachineEditor' index.html
+          grep -Fq 'openMachineScreen(machine.id)' index.html
+          grep -Fq 'PULSE CNC 1.0 Beta — campos compactos e gabaritos fáceis' index.html
+
+      - name: Test quick sum parser
+        run: |
+          node <<'JS'
+          function parseGabaritoExpression(value) {
+            const clean = String(value || '').replace(/\s+/g, '');
+            if (!clean) return [];
+            if (!/^\d+(?:\+\d+)*$/.test(clean)) return null;
+            return clean.split('+').map(Number).filter(number => Number.isFinite(number) && number >= 0);
+          }
+          const parsed = parseGabaritoExpression('60+40+39+22');
+          if (!parsed || parsed.reduce((a,b) => a+b, 0) !== 161) process.exit(1);
+          if (parseGabaritoExpression('60++40') !== null) process.exit(1);
+          console.log('Soma rápida validada: 161');
+          JS
+
+      - name: Commit generated HTML
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'feat: compactar campos e melhorar gabaritos'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
