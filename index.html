@@ -1504,6 +1504,55 @@
       .pulseHeroV12 .mainCountdownV11 strong { font-size:clamp(38px,12vw,55px) !important; }
     }
 
+  
+
+    /* PULSE CNC — contador leve, cores no preenchimento e modal rolável */
+    .clockMs, .countdownMs, [data-v10-live="milliseconds"], .mainCountdownV11 > small { display:none !important; }
+    .editorLiveResult.bad { border-color:rgba(255,111,130,.52) !important; background:linear-gradient(145deg,rgba(173,48,59,.18),rgba(255,255,255,.025)) !important; }
+    .editorLiveResult.warn { border-color:rgba(242,184,100,.48) !important; background:linear-gradient(145deg,rgba(154,90,8,.18),rgba(255,255,255,.025)) !important; }
+    .editorLiveResult.ok { border-color:rgba(86,213,199,.42) !important; }
+    .editorLiveResult.bad .editorResultHead strong { color:#ff8fa0 !important; }
+    .editorLiveResult.warn .editorResultHead strong { color:#f2b864 !important; }
+    .editorLiveResult.ok .editorResultHead strong { color:#56d5c7 !important; }
+
+    body:has(#settingsModal[open]) { overflow:hidden !important; }
+    #settingsModal {
+      width:min(760px,calc(100vw - 20px));
+      max-width:760px;
+      max-height:calc(100dvh - 20px);
+      padding:0 !important;
+      overflow:hidden !important;
+    }
+    #settingsForm {
+      width:100%;
+      max-height:calc(100dvh - 20px);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    #settingsModal .modalHead { flex:0 0 auto; }
+    #settingsModal .modalBody {
+      flex:1 1 auto;
+      min-height:0;
+      overflow-y:auto !important;
+      overscroll-behavior:contain;
+      -webkit-overflow-scrolling:touch;
+      touch-action:pan-y;
+      padding-bottom:28px;
+    }
+    #settingsModal .modalFoot {
+      position:sticky;
+      bottom:0;
+      z-index:5;
+      flex:0 0 auto;
+      background:#fff;
+      box-shadow:0 -12px 28px rgba(0,0,0,.10);
+    }
+    @media(max-width:620px){
+      #settingsModal { width:calc(100vw - 12px); max-height:calc(100dvh - 12px); }
+      #settingsForm { max-height:calc(100dvh - 12px); }
+    }
+
   </style>
 </head>
 <body class="cell-selection">
@@ -1641,7 +1690,7 @@
         <div class="grid2">
           <div class="field fixedRuleBox">
             <label>Regra de encerramento</label>
-            <div class="fixedRuleText">🟥 menos de 8h · 🟧 menos de 16h</div>
+            <div class="fixedRuleText">Vermelho: turno atual · Laranja: próximo turno</div>
           </div>
           <div class="field">
             <label for="turnMinutes">Meta por turno usa (minutos)</label>
@@ -1686,7 +1735,7 @@
               <span class="badge" data-role="statusBadge">Aguardando dados</span>
             </div>
             <div class="cardMini">
-              <span class="cardCountdown" data-role="miniRest"><span class="clockMain">--:--:--</span><small class="clockMs">.---</small></span>
+              <span class="cardCountdown" data-role="miniRest"><span class="clockMain">--:--:--</span></span>
               <span class="dot">•</span>
               <span class="cardPrediction" data-role="miniEnd">Sem previsão</span>
             </div>
@@ -1783,7 +1832,7 @@
               <span class="remainingLabel">Restante</span>
               <strong class="liveCountdown" data-role="projectionRest" aria-label="Tempo restante">
                 <span class="countdownClock" data-role="countdownClock">--:--:--</span>
-                <small class="countdownMs" data-role="countdownMs">.---</small>
+                
               </strong>
             </div>
             <div class="compactProjectionMetric">
@@ -1851,7 +1900,7 @@
       8. O relógio atual reduz somente o tempo restante, sem deslocar a previsão.
       9. Zoom por pinça, duplo toque e foco de campo bloqueado no iPhone.
       10. Botão para adicionar máquina também abaixo do último card.
-      11. Tempo restante em HH:MM:SS.mmm com atualização visual contínua.
+      11. Tempo restante em HH:MM:SS com atualização a cada segundo.
     */
 
     const STORAGE_KEY = "expertcnc-reformulado-v1"; // Mantido para preservar os dados já cadastrados
@@ -2441,11 +2490,11 @@
       const miniEnd = root.querySelector('[data-role="miniEnd"]');
       if (calc.valid && calc.endDT) {
         const parts = formatCountdownParts(calc.restMs);
-        miniRest.innerHTML = `<span class="clockMain">${parts.clock}</span><small class="clockMs">.${parts.milliseconds}</small>`;
+        miniRest.innerHTML = `<span class="clockMain">${parts.clock}</span>`;
         miniRest.setAttribute("aria-label", `${parts.clock}.${parts.milliseconds} restantes`);
         miniEnd.textContent = `Previsão ${fmtDate(calc.endDT)} às ${fmtTime(calc.endDT)}`;
       } else {
-        miniRest.innerHTML = `<span class="clockMain">--:--:--</span><small class="clockMs">.---</small>`;
+        miniRest.innerHTML = `<span class="clockMain">--:--:--</span>`;
         miniEnd.textContent = "";
       }
 
@@ -2615,18 +2664,15 @@
     function updateCountdownDisplay(root, calc) {
       const wrap = root.querySelector('[data-role="projectionRest"]');
       const clock = root.querySelector('[data-role="countdownClock"]');
-      const milliseconds = root.querySelector('[data-role="countdownMs"]');
-      if (!wrap || !clock || !milliseconds) return;
+      if (!wrap || !clock) return;
       if (!calc.valid || !calc.endDT) {
         clock.textContent = "--:--:--";
-        milliseconds.textContent = ".---";
         wrap.setAttribute("aria-label", "Tempo restante indisponível");
         return;
       }
       const parts = formatCountdownParts(calc.restMs);
       clock.textContent = parts.clock;
-      milliseconds.textContent = `.${parts.milliseconds}`;
-      wrap.setAttribute("aria-label", `${parts.clock}.${parts.milliseconds} restantes`);
+      wrap.setAttribute("aria-label", `${parts.clock} restantes`);
     }
 
     function renderNotice(root, calc) {
@@ -2904,7 +2950,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
           <div class="cockpitHero">
             <span class="cockpitStatus ${statusClass}" data-v10-live="status">${escapeHtml(calc.statusText.toUpperCase())}</span>
             <span class="cockpitLabel">Tempo restante</span>
-            <div class="cockpitCountdown"><strong data-v10-live="countdown">${countdown.clock}</strong><small data-v10-live="milliseconds">.${countdown.milliseconds}</small></div>
+            <div class="cockpitCountdown"><strong data-v10-live="countdown">${countdown.clock}</strong></div>
             <div class="progressRing" data-v10-live="progress-ring" style="--progress:${progress.toFixed(2)}"><strong data-v10-live="progress">${Math.round(progress)}%</strong><span>DA OP</span></div>
           </div>
           <div class="cockpitSide">
@@ -3145,9 +3191,10 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       const target = Math.max(0, parseInteger(machine.target));
       const missing = Math.max(0, target - Math.min(target, past + estimate));
       const progress = target ? Math.min(100, ((past + estimate) / target) * 100) : 0;
-      return `<section class="editorLiveResult">
+      const statusClass = calc.badgeClass === 'bad' ? 'bad' : calc.badgeClass === 'warn' ? 'warn' : 'ok';
+      return `<section class="editorLiveResult ${statusClass}">
         <div class="editorResultHead"><div><span>RESULTADO AO VIVO</span><strong>${escapeHtml(calc.statusText.toUpperCase())}</strong></div><b>${Math.round(progress)}%</b></div>
-        <div class="editorResultClock"><span>Tempo restante</span><strong>${parts.clock}<small>.${parts.milliseconds}</small></strong></div>
+        <div class="editorResultClock"><span>Tempo restante</span><strong data-v12-editor-countdown>${parts.clock}</strong></div>
         <div class="editorResultBar"><i style="width:${progress}%"></i></div>
         <div class="editorResultMetrics"><div><span>Total dos gabaritos</span><strong>${past}</strong></div><div><span>Produção ao vivo</span><strong>${estimate}</strong></div><div><span>Faltam</span><strong>${missing}</strong></div><div><span>MP disponível</span><strong>${calc.capacity}</strong></div></div>
       </section>`;
@@ -3326,7 +3373,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
     renderCellSelector();
     updateLiveClock();
     setInterval(updateLiveClock, 1000);
-    setInterval(refreshLiveRemaining, 250);
+    setInterval(refreshLiveRemaining, 1000);
   
 
     /* V11.0.02 — foco imediato e digitação fluida no iPhone */
@@ -3511,7 +3558,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
         <section class="machineView cockpitV11 pulseResultV12">
           <div class="resultHeroV11 pulseHeroV12">
             <div class="resultHeroTopV11"><span class="resultStatusV11 ${statusClass}" data-v10-live="status">${escapeHtml(calc.statusText.toUpperCase())}</span><small>Tempo restante</small></div>
-            <div class="mainCountdownV11"><strong data-v10-live="countdown">${countdown.clock}</strong><small data-v10-live="milliseconds">.${countdown.milliseconds}</small></div>
+            <div class="mainCountdownV11"><strong data-v10-live="countdown">${countdown.clock}</strong></div>
             <div class="pulseForecastV12"><span>Previsão fixa</span><strong>${fmtTime(calc.endDT)}</strong><small>${fmtDate(calc.endDT)} · ${shiftName(getShiftWindowFor(calc.endDT).id)}</small></div>
             <div class="opProgressV11"><div class="opProgressLabelsV11"><span>${currentTotal} / ${target} peças</span><strong data-v10-live="progress">${Math.round(progress)}%</strong></div><div class="opProgressTrackV11"><i data-v10-live="progress-bar" style="width:${progress}%"></i></div></div>
           </div>
@@ -3637,8 +3684,14 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
     }
 
     function refreshMachineScreenLive() {
-      if (!machineScreen?.open || machineScreenMode !== 'result') return;
+      if (!machineScreen?.open) return;
       const machine = getActiveMachine(); if (!machine) return;
+      if (machineScreenMode === 'edit') {
+        const holder = machineScreenContent.querySelector('[data-v111-preview]');
+        if (holder) holder.innerHTML = compactEditorPreview(machine);
+        return;
+      }
+      if (machineScreenMode !== 'result') return;
       syncPastProductionV11(machine);
       const calc = calcMachine(machine); if (!calc.valid) { machineScreenMode='edit'; return renderMachineScreen(); }
       const now = Date.now();
@@ -3650,7 +3703,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       const missing = Math.max(0, target - Math.min(target || Infinity, past + estimate));
       const progress = target ? Math.max(0, Math.min(100, (past + estimate) / target * 100)) : 0;
       const set = (selector,value) => { const node=machineScreenContent.querySelector(selector); if(node) node.textContent=String(value); };
-      set('[data-v10-live="countdown"]',parts.clock); set('[data-v10-live="milliseconds"]',`.${parts.milliseconds}`); set('[data-v10-live="estimated"]',estimate); set('[data-v10-live="shift-end-estimated"]',shiftEnd); set('[data-v10-live="missing"]',missing); set('[data-v10-live="progress"]',`${Math.round(progress)}%`);
+      set('[data-v10-live="countdown"]',parts.clock); set('[data-v10-live="estimated"]',estimate); set('[data-v10-live="shift-end-estimated"]',shiftEnd); set('[data-v10-live="missing"]',missing); set('[data-v10-live="progress"]',`${Math.round(progress)}%`);
       const bar=machineScreenContent.querySelector('[data-v10-live="progress-bar"]'); if(bar) bar.style.width=`${progress}%`;
       const status=machineScreenContent.querySelector('[data-v10-live="status"]'); if(status){ status.textContent=calc.statusText.toUpperCase(); status.className=`resultStatusV11 ${calc.badgeClass==='bad'?'bad':calc.badgeClass==='warn'?'warn':''}`.trim(); }
     }
