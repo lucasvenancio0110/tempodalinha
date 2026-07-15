@@ -1605,6 +1605,25 @@
       .draggableOrderV12 > small { display:none; }
     }
 
+  
+
+    /* PULSE CNC — fluxo correto do Preset */
+    .presetNextOpLeadV13 { display:flex; align-items:center; gap:10px; margin-bottom:10px; padding:12px; border-radius:13px; color:#70eadc; background:rgba(86,213,199,.10); }
+    .presetNextOpLeadV13 > span { font-size:22px; }
+    .presetNextOpLeadV13 small,.presetNextOpLeadV13 strong { display:block; }
+    .presetNextOpLeadV13 small { color:#8fbab5; font-size:10px; }
+    .presetNextOpLeadV13 strong { margin-top:2px; color:#eafffb; font-size:18px; }
+    .presetSummaryV13 { margin-top:12px; padding:16px; border:1px solid rgba(255,255,255,.10); border-radius:18px; background:rgba(255,255,255,.035); }
+    .presetSummaryV13.pending { border-color:rgba(242,184,100,.35); background:linear-gradient(145deg,rgba(91,58,14,.22),rgba(20,29,35,.94)); }
+    .presetSummaryV13.received { border-color:rgba(86,213,199,.38); background:linear-gradient(145deg,rgba(16,93,82,.20),rgba(20,29,35,.94)); }
+    .presetSummaryV13 > span { color:#f2b864; font-size:9px; font-weight:950; letter-spacing:.14em; }
+    .presetSummaryV13.received > span { color:#70eadc; }
+    .presetSummaryV13 > strong { display:block; margin:4px 0 12px; color:#f6fbfa; font-size:20px; }
+    .presetSummaryV13 > div { padding:10px 0; border-top:1px solid rgba(255,255,255,.08); }
+    .presetSummaryV13 small,.presetSummaryV13 b { display:block; }
+    .presetSummaryV13 small { color:#8da1a7; font-size:9px; font-weight:850; text-transform:uppercase; letter-spacing:.08em; }
+    .presetSummaryV13 b { margin-top:4px; color:#f4fbfa; font-size:16px; }
+
   </style>
 </head>
 <body class="cell-selection">
@@ -3590,7 +3609,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
         </div>`).join('');
     }
 
-    function renderPresetV11(machine, calc) {
+    function renderPresetEditorV13(machine, calc) {
       if (!presetRequiredV11(calc)) return '';
       const received = machine.presetMode === 'yes';
       const requestDate = calc.endDT ? fmtDate(calc.endDT) : '-';
@@ -3604,18 +3623,33 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       ].map(([value,label]) => `<option value="${value}" ${machine.presetType===value?'selected':''}>${label}</option>`).join('');
       return `<section class="presetMissionV12 ${received ? 'received' : 'pending'}">
         <div class="presetMissionHeadV12">
-          <div><span>PRÓXIMA OP</span><strong>Preset da máquina</strong></div>
+          <div><span>PRÓXIMA OP</span><strong>O setor do Preset já trouxe a nova OP?</strong></div>
           <b>${received ? 'PRESET RECEBIDO' : 'PRESET PENDENTE'}</b>
         </div>
         <div class="presetDecisionV12">
           <button type="button" data-v10-action="preset-mode" data-value="yes" class="${received ? 'active' : ''}"><span>✓</span><strong>Já trouxe</strong></button>
           <button type="button" data-v10-action="preset-mode" data-value="no" class="${!received ? 'active' : ''}"><span>⌛</span><strong>Ainda não trouxe</strong></button>
         </div>
-        <div class="presetTypeV12"><label>Tipo da próxima OP</label><select data-v10-field="presetType">${setupOptions}</select></div>
         ${received
-          ? `<div class="presetReceivedV12"><span>✓</span><div><strong>Preset disponível</strong><small>${escapeHtml(presetLabel(machine))}</small></div></div>`
+          ? `<div class="presetTypeV12 presetTypeConfirmedV13"><label>TIPO DA PRÓXIMA OP</label><div class="presetNextOpLeadV13"><span>✓</span><div><small>A próxima OP será</small><strong>${escapeHtml(presetLabel(machine))}</strong></div></div><select data-v10-field="presetType">${setupOptions}</select></div>`
           : `<div class="presetRequestV12"><span>Solicitar ao Preset</span><strong>${requestDate} · ${requestTime}</strong><small>${remainingText}</small></div><div class="presetItemV12"><label>Item da próxima OP</label><input data-v10-field="itemCode" value="${escapeHtml(String(machine.itemCode || ''))}" placeholder="Ex.: 125.142-1"></div>`}
       </section>`;
+    }
+
+    function renderPresetDashboardV13(machine, calc) {
+      if (!presetRequiredV11(calc)) return '';
+      const received = machine.presetMode === 'yes';
+      if (received) {
+        return `<section class="presetSummaryV13 received"><span>PRÓXIMA OP</span><strong>Preset recebido</strong><div><small>A próxima OP será</small><b>${escapeHtml(presetLabel(machine))}</b></div></section>`;
+      }
+      const requestDate = calc.endDT ? fmtDate(calc.endDT) : '-';
+      const requestTime = calc.endDT ? fmtTime(calc.endDT) : '--:--';
+      const item = String(machine.itemCode || '').trim() || 'Item não informado';
+      return `<section class="presetSummaryV13 pending"><span>PRÓXIMA OP</span><strong>Preset pendente</strong><div><small>Item solicitado</small><b>${escapeHtml(item)}</b></div><div><small>Solicitar ao Preset</small><b>${requestDate} · ${requestTime}</b></div></section>`;
+    }
+
+    function renderPresetV11(machine, calc) {
+      return machineScreenMode === 'edit' ? renderPresetEditorV13(machine, calc) : renderPresetDashboardV13(machine, calc);
     }
 
     function renderMachineEditor(machine, calc) {
@@ -3637,7 +3671,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
             <div class="operatorField"><label>4. Peça (mm)</label><input class="operatorInput" data-v10-field="pieceLength" inputmode="decimal" value="${escapeHtml(String(machine.pieceLength ?? ''))}" placeholder="32"></div>
             <div class="operatorField compactBarsV111"><label>5. Barras</label><div class="barCounter"><button type="button" data-v10-action="bar-minus">−</button><strong>${parseInteger(machine.fullBars)}</strong><button type="button" data-v10-action="bar-plus">＋</button></div></div>
             <details class="optionalPanel compactOptionalV111" ${machine.traysCollapsed === false ? 'open' : ''}><summary>Gabaritos — turnos passados <b>${totalTrays}</b></summary><div class="optionalBodyV11"><div class="trayModeTabsV12"><button type="button" data-v10-action="gabarito-mode" data-value="individual" class="${!useSum ? 'active' : ''}">Individual</button><button type="button" data-v10-action="gabarito-mode" data-value="sum" class="${useSum ? 'active' : ''}">Soma rápida</button></div><div class="trayTotalV11"><span>Total produzido nos turnos passados</span><strong>${totalTrays}</strong></div>${gabaritos}</div></details>
-            <div data-v111-preview>${compactEditorPreview(machine)}</div>
+            <div data-v111-preview>${compactEditorPreview(machine)}</div>${renderPresetEditorV13(machine, calc)}
             ${renderPresetV11(machine, calcMachine(machine))}
           </div>
         </section>`;
@@ -3715,6 +3749,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
             </div>
           </details>
           ${renderPresetV11(machine, calc)}
+        ${renderPresetDashboardV13(machine, calc)}
         </section>`;
       machineScreenFooter.innerHTML = `<button class="machineFooterBtn" data-v10-action="previous" type="button" ${activeMachineIndex()<=0?'disabled':''}>${svgArrow(-1)} Anterior</button><button class="machineFooterBtn" data-v10-action="edit" type="button">Editar dados</button><button class="machineFooterBtn primary" data-v10-action="next" type="button">Próxima máquina ${svgArrow(1)}</button>`;
       bindMachineScreenEvents(machine);
