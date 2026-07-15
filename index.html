@@ -3623,7 +3623,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       ].map(([value,label]) => `<option value="${value}" ${machine.presetType===value?'selected':''}>${label}</option>`).join('');
       return `<section class="presetMissionV12 ${received ? 'received' : 'pending'}">
         <div class="presetMissionHeadV12">
-          <div><span>PRÓXIMA OP</span><strong>O setor do Preset já trouxe a nova OP?</strong></div>
+          <div><span>PRÓXIMA OP</span><strong>Preset recebido?</strong></div>
           <b>${received ? 'PRESET RECEBIDO' : 'PRESET PENDENTE'}</b>
         </div>
         <div class="presetDecisionV12">
@@ -3671,8 +3671,8 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
             <div class="operatorField"><label>4. Peça (mm)</label><input class="operatorInput" data-v10-field="pieceLength" inputmode="decimal" value="${escapeHtml(String(machine.pieceLength ?? ''))}" placeholder="32"></div>
             <div class="operatorField compactBarsV111"><label>5. Barras</label><div class="barCounter"><button type="button" data-v10-action="bar-minus">−</button><strong>${parseInteger(machine.fullBars)}</strong><button type="button" data-v10-action="bar-plus">＋</button></div></div>
             <details class="optionalPanel compactOptionalV111" ${machine.traysCollapsed === false ? 'open' : ''}><summary>Gabaritos — turnos passados <b>${totalTrays}</b></summary><div class="optionalBodyV11"><div class="trayModeTabsV12"><button type="button" data-v10-action="gabarito-mode" data-value="individual" class="${!useSum ? 'active' : ''}">Individual</button><button type="button" data-v10-action="gabarito-mode" data-value="sum" class="${useSum ? 'active' : ''}">Soma rápida</button></div><div class="trayTotalV11"><span>Total produzido nos turnos passados</span><strong>${totalTrays}</strong></div>${gabaritos}</div></details>
-            <div data-v111-preview>${compactEditorPreview(machine)}</div>${renderPresetEditorV13(machine, calc)}
-            ${renderPresetV11(machine, calcMachine(machine))}
+            <div data-v111-preview>${compactEditorPreview(machine)}</div>
+            ${renderPresetEditorV13(machine, calcMachine(machine))}
           </div>
         </section>`;
       machineScreenFooter.innerHTML = `<button class="machineFooterBtn" data-v10-action="previous" type="button" ${activeMachineIndex()<=0?'disabled':''}>${svgArrow(-1)} Anterior</button><button class="machineFooterBtn danger" data-v10-action="clear" type="button">Limpar dados</button><button class="machineFooterBtn primary" data-v10-action="save-next" type="button">Salvar e próxima ${svgArrow(1)}</button>`;
@@ -3748,8 +3748,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
               <div class="metricV11"><span>Cálculo iniciado</span><strong>${fmtTime(new Date(machine.calculationStartedAt))}</strong><small>${fmtDate(new Date(machine.calculationStartedAt))}</small></div>
             </div>
           </details>
-          ${renderPresetV11(machine, calc)}
-        ${renderPresetDashboardV13(machine, calc)}
+          ${renderPresetDashboardV13(machine, calc)}
         </section>`;
       machineScreenFooter.innerHTML = `<button class="machineFooterBtn" data-v10-action="previous" type="button" ${activeMachineIndex()<=0?'disabled':''}>${svgArrow(-1)} Anterior</button><button class="machineFooterBtn" data-v10-action="edit" type="button">Editar dados</button><button class="machineFooterBtn primary" data-v10-action="next" type="button">Próxima máquina ${svgArrow(1)}</button>`;
       bindMachineScreenEvents(machine);
