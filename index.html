@@ -1624,6 +1624,15 @@
     .presetSummaryV13 small { color:#8da1a7; font-size:9px; font-weight:850; text-transform:uppercase; letter-spacing:.08em; }
     .presetSummaryV13 b { margin-top:4px; color:#f4fbfa; font-size:16px; }
 
+  
+
+    /* PULSE CNC - correcao de duplicacao do Preset */
+    .presetMissionHeadV12 strong { max-width:230px; font-size:17px; line-height:1.15; }
+    .presetMissionHeadV12 { align-items:flex-start; }
+    @media (max-width:560px) {
+      .presetMissionHeadV12 strong { max-width:180px; font-size:16px; }
+    }
+
   </style>
 </head>
 <body class="cell-selection">
@@ -3623,7 +3632,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       ].map(([value,label]) => `<option value="${value}" ${machine.presetType===value?'selected':''}>${label}</option>`).join('');
       return `<section class="presetMissionV12 ${received ? 'received' : 'pending'}">
         <div class="presetMissionHeadV12">
-          <div><span>PRÓXIMA OP</span><strong>O setor do Preset já trouxe a nova OP?</strong></div>
+          <div><span>PRÓXIMA OP</span><strong>Preset recebido?</strong></div>
           <b>${received ? 'PRESET RECEBIDO' : 'PRESET PENDENTE'}</b>
         </div>
         <div class="presetDecisionV12">
@@ -3748,7 +3757,8 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
               <div class="metricV11"><span>Cálculo iniciado</span><strong>${fmtTime(new Date(machine.calculationStartedAt))}</strong><small>${fmtDate(new Date(machine.calculationStartedAt))}</small></div>
             </div>
           </details>
-          ${renderPresetV11(machine, calc)}
+          
+        
         ${renderPresetDashboardV13(machine, calc)}
         </section>`;
       machineScreenFooter.innerHTML = `<button class="machineFooterBtn" data-v10-action="previous" type="button" ${activeMachineIndex()<=0?'disabled':''}>${svgArrow(-1)} Anterior</button><button class="machineFooterBtn" data-v10-action="edit" type="button">Editar dados</button><button class="machineFooterBtn primary" data-v10-action="next" type="button">Próxima máquina ${svgArrow(1)}</button>`;
