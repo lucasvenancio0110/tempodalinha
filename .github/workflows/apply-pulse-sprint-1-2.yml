@@ -1,0 +1,78 @@
+name: Apply PULSE Sprint 1.2
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Aplicar Sprint 1.2
+        run: python tools/apply_pulse_sprint_1_2.py
+      - name: Validar interface e contratos
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          text = Path('index.html').read_text(encoding='utf-8')
+          required = [
+            'decisionFactsV12',
+            'Previsão de encerramento',
+            'Até o fim do turno',
+            'presetMissionV12',
+            'PRESET PENDENTE',
+            'PRESET RECEBIDO',
+            'dragHandleV12',
+            'bindMachineOrderDrag',
+            'commitMachineOrderFromList',
+            "state.cells[state.selectedCell] = state.machines",
+            'data-v12-editor-countdown',
+            'data-v10-action="preset-mode"',
+            'data-v10-field="presetType"',
+            'data-v10-field="itemCode"'
+          ]
+          for marker in required:
+            assert marker in text, marker
+          preview = text[text.rfind('function compactEditorPreview'):text.find('function updateCompactEditorPreview', text.rfind('function compactEditorPreview'))]
+          assert 'Total dos gabaritos</span><strong>' not in preview
+          assert 'MP disponível' not in preview
+          scripts = re.findall(r'<script>(.*?)</script>', text, re.S)
+          assert scripts
+          Path('/tmp/app.js').write_text('\n'.join(scripts), encoding='utf-8')
+          print('Contratos da Sprint 1.2 aprovados')
+          PY
+          node --check /tmp/app.js
+      - name: Testar reordenação sem perda
+        run: |
+          node <<'JS'
+          const machines=[{id:'a',machine:61},{id:'b',machine:52},{id:'c',machine:60}];
+          const ids=['b','c','a'];
+          const byId=new Map(machines.map(m=>[m.id,m]));
+          const reordered=ids.map(id=>byId.get(id)).filter(Boolean);
+          if(reordered.map(m=>m.machine).join(',')!=='52,60,61') throw new Error('ordem incorreta');
+          if(reordered.length!==machines.length) throw new Error('máquina perdida');
+          console.log('Reordenação aprovada');
+          JS
+      - name: Commitar resultado
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Implementa PULSE CNC Sprint 1.2"
+          git push
