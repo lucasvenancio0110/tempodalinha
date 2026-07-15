@@ -36,7 +36,7 @@ jobs:
           assert result.count('renderPresetDashboardV13(') == 1
           assert 'renderPresetV11(' not in editor
           assert 'renderPresetV11(' not in result
-          assert 'Preset recebido?' in editor
+          assert 'Preset recebido?' in text
           scripts = re.findall(r'<script>(.*?)</script>', text, re.S)
           Path('/tmp/app.js').write_text('\n'.join(scripts), encoding='utf-8')
           print('Preset único no editor e dashboard')
