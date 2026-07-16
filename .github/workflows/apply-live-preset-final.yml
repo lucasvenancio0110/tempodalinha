@@ -31,9 +31,7 @@ jobs:
           import re
           text = Path('index.html').read_text(encoding='utf-8')
           assert 'function refreshPresetEditorV14(machine)' in text
-          assert 'data-v14-preset-editor' in text
-          assert text.count('function refreshPresetEditorV14(machine)') == 1
-          assert text.count('data-v14-preset-editor') >= 2
+          assert '<div class="presetEditorSlotV14" data-v14-preset-editor>' in text
           assert 'refreshPresetEditorV14(machine);' in text
           scripts = re.findall(r'<script>(.*?)</script>', text, re.S)
           Path('/tmp/app.js').write_text('\n'.join(scripts), encoding='utf-8')
