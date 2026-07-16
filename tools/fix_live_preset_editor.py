@@ -6,10 +6,12 @@ raw = path.read_bytes()
 newline = '\r\n' if b'\r\n' in raw else '\n'
 text = raw.decode('utf-8').replace('\r\n','\n')
 
-if 'data-v14-preset-editor' not in text:
+container_markup = '<div class="presetEditorSlotV14" data-v14-preset-editor>'
+if container_markup not in text:
     pattern = r'(\s*<div data-v111-preview>\$\{compactEditorPreview\(machine\)\}</div>)\s*\$\{renderPresetEditorV13\(machine, calcMachine\(machine\)\)\}'
-    replacement = r'\1\n             <div class="presetEditorSlotV14" data-v14-preset-editor>${renderPresetEditorV13(machine, calcMachine(machine))}</div>'
-    text, count = re.subn(pattern, replacement, text, count=1)
+    def add_slot(match):
+        return match.group(1) + '\n             ' + container_markup + '${renderPresetEditorV13(machine, calcMachine(machine))}</div>'
+    text, count = re.subn(pattern, add_slot, text, count=1)
     assert count == 1, 'montagem atual do Preset não encontrada'
 
 anchor = "    function renderMachineEditor(machine, calc) {"
@@ -39,10 +41,10 @@ helper = '''    function bindPresetEditorV14(machine, slot) {
 
 '''
 assert anchor in text
-if 'function refreshPresetEditorV14(machine)' not in text:
+if '\n    function refreshPresetEditorV14(machine)' not in text:
     text = text.replace(anchor, helper + anchor, 1)
 
-assert 'data-v14-preset-editor' in text
+assert container_markup in text
 assert text.count('function refreshPresetEditorV14(machine)') == 1
 assert 'refreshPresetEditorV14(machine);' in text
 
