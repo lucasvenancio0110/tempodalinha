@@ -1633,6 +1633,15 @@
       .presetMissionHeadV12 strong { max-width:180px; font-size:16px; }
     }
 
+  
+
+    /* PULSE CNC — Preset e soma rápida V14 */
+    .compactOperatorV111 [data-v111-preview],
+    .compactOperatorV111 .presetEditorSlotV14,
+    .compactOperatorV111 .presetMissionV12 { grid-column: 1 / -1; width: 100%; min-width: 0; }
+    .presetEditorSlotV14:empty { display:none; }
+    .quickTrayField input[data-v111-tray-expression] { font-variant-numeric: tabular-nums; }
+
   </style>
 </head>
 <body class="cell-selection">
@@ -2954,6 +2963,20 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       machineScreenContent.firstElementChild?.classList.add("machineViewSwap");
     }
 
+    function refreshPresetEditorV14(machine) {
+      const slot = machineScreenContent.querySelector('[data-v14-preset-editor]');
+      if (!slot) return;
+      const html = renderPresetEditorV13(machine, calcMachine(machine));
+      if (slot.innerHTML !== html) {
+        slot.innerHTML = html;
+        slot.querySelectorAll('[data-v10-action]').forEach(button => { button.onclick = () => handleMachineScreenAction(button, machine); });
+        slot.querySelectorAll('[data-v10-field]').forEach(input => {
+          input.addEventListener('input', () => { machine[input.dataset.v10Field] = input.value; saveState(); });
+          input.addEventListener('change', () => { machine[input.dataset.v10Field] = input.value; saveState(); });
+        });
+      }
+    }
+
     function renderMachineEditor(machine, calc) {
       const piecesLabel = machine.barMode === "partialMm" ? "Milímetros restantes" : "Peças restantes";
       const piecesValue = machine.barMode === "partialMm" ? machine.partialMm : machine.partialPieces;
@@ -3526,7 +3549,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
     }
 
     function presetRequiredV11(calc) {
-      return !!(calc && calc.valid && calc.restMin < 16 * 60);
+      return !!(calc && calc.valid && ['now','next','reached'].includes(calc.status));
     }
 
     function presetPendingV11(machine, calc) {
@@ -3668,7 +3691,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       const totalTrays = trayTotalV11(machine);
       const useSum = (machine.gabaritoMode || 'individual') === 'sum';
       const gabaritos = useSum
-        ? `<div class="quickTrayField"><label>Soma dos gabaritos</label><input class="operatorInput" data-v111-tray-expression inputmode="numeric" value="${escapeHtml(gabaritoExpression(machine))}" placeholder="60+40+39+22"><small data-v111-tray-feedback>Use números separados por +</small></div>`
+        ? `<div class="quickTrayField"><label>Soma dos gabaritos</label><input class="operatorInput" data-v111-tray-expression type="text" inputmode="text" autocapitalize="off" autocomplete="off" spellcheck="false" value="${escapeHtml(gabaritoExpression(machine))}" placeholder="60+40+39+22"><small data-v111-tray-feedback>Use números separados por +</small></div>`
         : `<div class="trayListV11">${traysMarkupV11(machine)}</div><button class="addTrayV11" data-v10-action="add-tray" type="button">Adicionar gabarito</button>`;
       machineScreenContent.innerHTML = `
         <section class="machineView operatorForm compactOperatorV111">
@@ -3775,8 +3798,9 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
           } else machine[field] = input.value;
           saveState();
           updateCompactEditorPreview(machine);
+          refreshPresetEditorV14(machine);
         });
-        input.addEventListener('change', () => { ensureExactStart(machine); saveState(); updateCompactEditorPreview(machine); });
+        input.addEventListener('change', () => { ensureExactStart(machine); saveState(); updateCompactEditorPreview(machine); refreshPresetEditorV14(machine); });
         input.addEventListener('keydown', event => {
           if (event.key !== 'Enter') return;
           event.preventDefault();
@@ -3808,6 +3832,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
           if (totalNode) totalNode.textContent = String(total);
           if (summaryNode) summaryNode.textContent = String(total);
           updateCompactEditorPreview(machine);
+          refreshPresetEditorV14(machine);
         });
       });
       const details = machineScreenContent.querySelector('.optionalPanel');
@@ -3849,6 +3874,7 @@ Todos os dados preenchidos serão apagados. A máquina continuará na célula.`)
       if (machineScreenMode === 'edit') {
         const holder = machineScreenContent.querySelector('[data-v111-preview]');
         if (holder) holder.innerHTML = compactEditorPreview(machine);
+        refreshPresetEditorV14(machine);
         return;
       }
       if (machineScreenMode !== 'result') return;
